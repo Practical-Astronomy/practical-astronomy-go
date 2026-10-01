@@ -287,3 +287,11 @@ type PlanetVisualAspects struct {
 	PosAngleBrightLimbDeg float64
 	ApproximateMagnitude  float64
 }
+
+type EllipticalCometPosition struct {
+	RaHour    float64
+	RaMin     float64
+	DecDeg    float64
+	DecMin    float64
+	DistEarth float64
+}
