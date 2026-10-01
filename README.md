@@ -52,7 +52,7 @@ If you're interested in this topic, please buy the book! It provides far more de
 
 ### Comets
 
-- [ ] Calculate -> Position of elliptical comet
+- [x] Calculate -> Position of elliptical comet
 - [ ] Calculate -> Position of parabolic comet
  
 ### Binary Stars
