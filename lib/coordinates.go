@@ -127,23 +127,23 @@ func HorizonCoordinatesToEquatorialCoordinates(
 	altitudeDegrees float64, altitudeMinutes float64, altitudeSeconds float64,
 	geographicalLatitude float64,
 ) patype.EquatorialCoordinates {
-	var hour_angle_in_decimal_degrees float64 = pamacro.HorizonCoordinatesToHourAngle(
+	var hourAngleInDecimalDegrees float64 = pamacro.HorizonCoordinatesToHourAngle(
 		azimuthDegrees, azimuthMinutes, azimuthSeconds, altitudeDegrees, altitudeMinutes, altitudeSeconds, geographicalLatitude)
 
-	var declination_in_decimal_degrees float64 = pamacro.HorizonCoordinatesToDeclination(
+	var declinationInDecimalDegrees float64 = pamacro.HorizonCoordinatesToDeclination(
 		azimuthDegrees, azimuthMinutes, azimuthSeconds, altitudeDegrees, altitudeMinutes, altitudeSeconds, geographicalLatitude)
 
-	var hour_angle_hours int = pamacro.DecimalHoursHour(hour_angle_in_decimal_degrees)
-	var hour_angle_minutes int = pamacro.DecimalHoursMinute(hour_angle_in_decimal_degrees)
-	var hour_angle_seconds float64 = pamacro.DecimalDegreesSeconds(hour_angle_in_decimal_degrees)
+	var hourAngleHours int = pamacro.DecimalHoursHour(hourAngleInDecimalDegrees)
+	var hourAngleMinutes int = pamacro.DecimalHoursMinute(hourAngleInDecimalDegrees)
+	var hourAngleSeconds float64 = pamacro.DecimalDegreesSeconds(hourAngleInDecimalDegrees)
 
-	var declination_degrees float64 = pamacro.DecimalDegreesDegrees(declination_in_decimal_degrees)
-	var declination_minutes float64 = pamacro.DecimalDegreesMinutes(declination_in_decimal_degrees)
-	var declination_seconds float64 = pamacro.DecimalDegreesSeconds(declination_in_decimal_degrees)
+	var declinationDegrees float64 = pamacro.DecimalDegreesDegrees(declinationInDecimalDegrees)
+	var declinationMinutes float64 = pamacro.DecimalDegreesMinutes(declinationInDecimalDegrees)
+	var declinationSeconds float64 = pamacro.DecimalDegreesSeconds(declinationInDecimalDegrees)
 
 	return patype.EquatorialCoordinates{
-		HourAngleHours: float64(hour_angle_hours), HourAngleMinutes: float64(hour_angle_minutes), HourAngleSeconds: hour_angle_seconds,
-		DeclinationDegrees: declination_degrees, DeclinationMinutes: declination_minutes, DeclinationSeconds: declination_seconds,
+		HourAngleHours: float64(hourAngleHours), HourAngleMinutes: float64(hourAngleMinutes), HourAngleSeconds: hourAngleSeconds,
+		DeclinationDegrees: declinationDegrees, DeclinationMinutes: declinationMinutes, DeclinationSeconds: declinationSeconds,
 	}
 }
 
@@ -507,7 +507,7 @@ func CorrectForAberration(
 /*
 Calculate corrected RA/Dec, accounting for atmospheric refraction.
 
-NOTE: Valid values for coordinate_type are "TRUE" and "APPARENT".
+NOTE: Valid values for coordinateType are "TRUE" and "APPARENT".
 */
 func AtmosphericRefraction(
 	trueRaHour float64, trueRaMin float64, trueRaSec float64,

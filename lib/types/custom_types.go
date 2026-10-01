@@ -17,10 +17,10 @@ type FullTime struct {
 /*
 Structure to hold a Time value, along with a calculation warning:
 
-int hours
-int minutes
-double seconds
-WarningFlags warning_flag
+int Hours
+int Minutes
+float64 Seconds
+WarningFlags WarningFlag
 */
 type FullTimeWithWarning struct {
 	Hours       int

@@ -922,19 +922,19 @@ func Refract(y2 float64, sw patype.CoordinateType, pr float64, tr float64) float
 		var r1 float64 = 0.0
 
 		for true {
-			var y_new float64 = y1 + r1
-			var rf_new float64 = Refract_L3035(pr, tr, y_new, d)
+			var yNew float64 = y1 + r1
+			var rfNew float64 = Refract_L3035(pr, tr, yNew, d)
 
 			if y < -0.087 {
 				return 0
 			}
 
-			var r2 float64 = rf_new
+			var r2 float64 = rfNew
 
 			if (r2 == 0) || (math.Abs(r2-r1) < 0.000001) {
-				var q_new float64 = y3
+				var qNew float64 = y3
 
-				return Degrees(q_new + rf_new)
+				return Degrees(qNew + rfNew)
 			}
 
 			r1 = r2
@@ -1124,7 +1124,7 @@ func ParallaxDec(hh float64, hm float64, hs float64, dd float64, dm float64, ds 
 	return 0 // silence the compiler error about a return
 }
 
-/* Helper function for parallax_dec */
+/* Helper function for ParallaxDec */
 func ParallaxDec_L2870(x float64, y float64, rc float64, rp float64, rs float64, tp float64) patype.ParallaxHelper {
 	var cx float64 = math.Cos(x)
 	var sy float64 = math.Sin(y)
@@ -1418,7 +1418,7 @@ Convert angle in degrees to equivalent angle in the range 0 to 360 degrees.
 
 Original macro name: UnwindDeg
 */
-func ma_unwind_deg(w float64) float64 {
+func UnwindDeg(w float64) float64 {
 	return w - 360*math.Floor(w/360)
 }
 
@@ -1577,7 +1577,7 @@ func SunriseLct(ld float64, lm int, ly int, ds int, zc int, gl float64, gp float
 	return xx
 }
 
-/* Helper function for sunrise_lct() */
+/* Helper function for SunriseLct() */
 func SunriseLct_L3710(gd float64, gm int, gy int, sr float64, di float64, gp float64) patype.SunriseLctHelper {
 	var a float64 = sr + NutatLong(gd, gm, gy) - 0.005694
 	var x float64 = EclipticRightAscension(a, 0, 0, 0, 0, 0, gd, gm, gy)
@@ -1624,7 +1624,7 @@ func SunsetLct(ld float64, lm int, ly int, ds int, zc int, gl float64, gp float6
 	return xx
 }
 
-/* Helper function for sunset_lct() */
+/* Helper function for SunsetLct() */
 func SunsetLct_L3710(gd float64, gm int, gy int, sr float64, di float64, gp float64) patype.SunsetLctHelper {
 	var a float64 = sr + NutatLong(gd, gm, gy) - 0.005694
 	var x float64 = EclipticRightAscension(a, 0.0, 0.0, 0.0, 0.0, 0.0, gd, gm, gy)
@@ -1758,15 +1758,15 @@ func ERiseSet(rah float64, ram float64, ras float64, dd float64, dm float64, ds 
 	var e float64 = pautil.DegreesToRadians(g)
 	var f float64 = -(math.Sin(d) + math.Sin(e)*math.Sin(c)) / (math.Cos(e) * math.Cos(c))
 
-	var return_value patype.RiseSetStatus = patype.RiseSetStatus_OK
+	var returnValue patype.RiseSetStatus = patype.RiseSetStatus_OK
 	if f >= 1 {
-		return_value = patype.RiseSetStatus_NeverRises
+		returnValue = patype.RiseSetStatus_NeverRises
 	}
 	if f <= -1 {
-		return_value = patype.RiseSetStatus_Circumpolar
+		returnValue = patype.RiseSetStatus_Circumpolar
 	}
 
-	return return_value
+	return returnValue
 }
 
 /*
@@ -1806,7 +1806,7 @@ func ESunRiseSet(ld float64, lm int, ly int, ds int, zc int, gl float64, gp floa
 	}
 }
 
-/* Helper function for e_sun_rs() */
+/* Helper function for ESunRiseSet() */
 func ESunRiseSet_L3710(gd float64, gm int, gy int, sr float64, di float64, gp float64) patype.SunriseLctHelper {
 	var a float64 = sr + NutatLong(gd, gm, gy) - 0.005694
 	var x float64 = EclipticRightAscension(a, 0, 0, 0, 0, 0, gd, gm, gy)
@@ -1852,7 +1852,7 @@ func SunriseAz(ld float64, lm int, ly int, ds int, zc int, gl float64, gp float6
 	return RiseSetAzimuthRise(DecimalDegreesToDegreeHours(x), 0, 0, result2.Y, 0.0, 0.0, di, gp)
 }
 
-/* Helper function for sunrise_az() */
+/* Helper function for SunriseAz() */
 func SunriseAz_L3710(gd float64, gm int, gy int, sr float64, di float64, gp float64) patype.SunriseLctHelper {
 	var a float64 = sr + NutatLong(gd, gm, gy) - 0.005694
 	var x float64 = EclipticRightAscension(a, 0, 0, 0, 0, 0, gd, gm, gy)
@@ -1899,7 +1899,7 @@ func SunsetAz(ld float64, lm int, ly int, ds int, zc int, gl float64, gp float64
 	return RiseSetAzimuthSet(DecimalDegreesToDegreeHours(x), 0, 0, result2.Y, 0, 0, di, gp)
 }
 
-/* Helper function for sunset_az() */
+/* Helper function for SunsetAz() */
 func SunsetAz_L3710(gd float64, gm int, gy int, sr float64, di float64, gp float64) patype.SunsetLctHelper {
 	var a float64 = sr + NutatLong(gd, gm, gy) - 0.005694
 	var x float64 = EclipticRightAscension(a, 0, 0, 0, 0, 0, gd, gm, gy)
@@ -1952,7 +1952,7 @@ func TwilightAmLct(ld float64, lm int, ly int, ds int, zc int, gl float64, gp fl
 	return xx
 }
 
-/* Helper function for twilight_am_lct() */
+/* Helper function for TwilightAmLct() */
 func TwilightAmLct_L3710(gd float64, gm int, gy int, sr float64, di float64, gp float64) patype.TwilightLctHelper {
 	var a float64 = sr + NutatLong(gd, gm, gy) - 0.005694
 	var x float64 = EclipticRightAscension(a, 0, 0, 0, 0, 0, gd, gm, gy)
@@ -1999,7 +1999,7 @@ func TwilightPmLct(ld float64, lm int, ly int, ds int, zc int, gl float64, gp fl
 	return UniversalTimeToLocalCivilTime(ut, 0, 0, ds, zc, gd, gm, gy)
 }
 
-/* Helper function for twilight_pm_lct() */
+/* Helper function for TwilightPmLct() */
 func TwilightPmLct_L3710(gd float64, gm int, gy int, sr float64, di float64, gp float64) patype.TwilightLctHelper {
 	var a float64 = sr + NutatLong(gd, gm, gy) - 0.005694
 	var x float64 = EclipticRightAscension(a, 0, 0, 0, 0, 0, gd, gm, gy)
@@ -2049,7 +2049,7 @@ func ETwilight(ld float64, lm int, ly int, ds int, zc int, gl float64, gp float6
 	return result2.S
 }
 
-/* Helper function for e_twilight() */
+/* Helper function for ETwilight() */
 func ETwilight_L3710(gd float64, gm int, gy int, sr float64, di float64, gp float64) patype.TwilightLctHelper2 {
 	var a float64 = sr + NutatLong(gd, gm, gy) - 0.005694
 	var x float64 = EclipticRightAscension(a, 0, 0, 0, 0, 0, gd, gm, gy)
@@ -2655,7 +2655,7 @@ func PlanetCoordinates(lh float64, lm float64, ls float64, ds int, zc int, dy fl
 	}
 }
 
-/* Helper function for planet_long_lat() */
+/* Helper function for PlanetCoordinates() */
 func PlanetLongL4685(pl []padata.PlanetDataPrecise) patype.PlanetLongLatL4685 {
 	var qa float64 = 0.00204 * math.Cos(5.0*pl[2].ApValue-2.0*pl[1].ApValue+0.21328)
 	qa += 0.00103 * math.Cos(2.0*pl[2].ApValue-pl[1].ApValue-2.8046)
@@ -2670,7 +2670,7 @@ func PlanetLongL4685(pl []padata.PlanetDataPrecise) patype.PlanetLongLatL4685 {
 	return patype.PlanetLongLatL4685{QA: qa, QB: qb}
 }
 
-/* Helper function for planet_long_lat() */
+/* Helper function for PlanetCoordinates() */
 func PlanetLongL4735(pl []padata.PlanetDataPrecise, ms float64, t float64) patype.PlanetLongLatL4735 {
 	var qc float64 = 0.00077 * math.Sin(4.1406+t*2.6227)
 	qc = pautil.DegreesToRadians(qc)
@@ -2693,7 +2693,7 @@ func PlanetLongL4735(pl []padata.PlanetDataPrecise, ms float64, t float64) patyp
 	return patype.PlanetLongLatL4735{QA: qa, QB: qb, QC: qc, QE: qe}
 }
 
-/* Helper function for planet_long_lat() */
+/* Helper function for PlanetCoordinates() */
 func PlanetLongL4810(pl []padata.PlanetDataPrecise, ms float64) patype.PlanetLongLatL4810 {
 	var a float64 = 3.0*pl[4].ApValue - 8.0*pl[3].ApValue + 4.0*ms
 	var sa float64 = math.Sin(a)
@@ -2729,7 +2729,7 @@ func PlanetLongL4810(pl []padata.PlanetDataPrecise, ms float64) patype.PlanetLon
 	return patype.PlanetLongLatL4810{A: a, SA: sa, CA: ca, QC: qc, QE: qe, QA: qa, QB: qb}
 }
 
-/* Helper function for planet_long_lat() */
+/* Helper function for PlanetCoordinates() */
 func PlanetLongL4945(t float64, planet padata.PlanetDataPrecise) patype.PlanetLongLatL4945 {
 	var qa float64 = 0.0
 	var qb float64 = 0.0

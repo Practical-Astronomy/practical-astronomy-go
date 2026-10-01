@@ -81,28 +81,28 @@ func LocalCivilTimeToUniversalTime(
 ) patype.FullDateTime {
 	var lct float64 = CivilTimeToDecimalHours(lctHours, lctMinutes, lctSeconds)
 
-	var daylight_savings_offset int
+	var daylightSavingsOffset int
 	if isDaylightSavings {
-		daylight_savings_offset = 1
+		daylightSavingsOffset = 1
 	} else {
-		daylight_savings_offset = 0
+		daylightSavingsOffset = 0
 	}
 
-	var ut_interim float64 = lct - float64(daylight_savings_offset) - float64(zoneCorrection)
-	var g_day_interim float64 = localDay + (ut_interim / 24)
+	var utInterim float64 = lct - float64(daylightSavingsOffset) - float64(zoneCorrection)
+	var gDayInterim float64 = localDay + (utInterim / 24)
 
-	var jd float64 = pamacro.CivilDateToJulianDate(g_day_interim, float64(localMonth), float64(localYear))
+	var jd float64 = pamacro.CivilDateToJulianDate(gDayInterim, float64(localMonth), float64(localYear))
 
-	var g_day float64 = pamacro.JulianDateDay(jd)
-	var g_month int = pamacro.JulianDateMonth(jd)
-	var g_year int = pamacro.JulianDateYear(jd)
+	var gDay float64 = pamacro.JulianDateDay(jd)
+	var gMonth int = pamacro.JulianDateMonth(jd)
+	var gYear int = pamacro.JulianDateYear(jd)
 
-	var ut float64 = 24 * (g_day - math.Floor(g_day))
+	var ut float64 = 24 * (gDay - math.Floor(gDay))
 
 	return patype.FullDateTime{
-		Month:   g_month,
-		Day:     int(math.Floor(g_day)),
-		Year:    g_year,
+		Month:   gMonth,
+		Day:     int(math.Floor(gDay)),
+		Year:    gYear,
 		Hours:   pamacro.DecimalHoursHour(ut),
 		Minutes: pamacro.DecimalHoursMinute(ut),
 		Seconds: pamacro.DecimalHoursSecond(ut),
