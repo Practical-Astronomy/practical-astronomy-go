@@ -124,3 +124,65 @@ func PrecisePositionOfPlanet(
 		DeclinationDegrees: planetDecDeg, DeclinationMinutes: planetDecMin, DeclinationSeconds: planetDecSec,
 	}
 }
+
+/* Calculate several visual aspects of a planet. */
+func VisualAspectsOfAPlanet(
+	lctHour float64, lctMin float64, lctSec float64, isDaylightSaving bool, zoneCorrectionHours int,
+	localDateDay float64, localDateMonth int, localDateYear int, planetName string,
+) patype.PlanetVisualAspects {
+	var daylightSaving int
+	if isDaylightSaving {
+		daylightSaving = 1
+	} else {
+		daylightSaving = 0
+	}
+
+	var greenwichDateDay float64 = pamacro.LocalCivilTimeGreenwichDay(
+		lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear)
+	var greenwichDateMonth int = int(pamacro.LocalCivilTimeGreenwichMonth(
+		lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear))
+	var greenwichDateYear int = int(pamacro.LocalCivilTimeGreenwichYear(
+		lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear))
+
+	var planetCoordInfo patype.PlanetCoordinates = pamacro.PlanetCoordinates(
+		lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear, planetName)
+
+	var planetRaRad float64 = pautil.DegreesToRadians(
+		pamacro.EclipticRightAscension(planetCoordInfo.Longitude, 0, 0, planetCoordInfo.Latitude, 0, 0, localDateDay, localDateMonth, localDateYear))
+	var planetDecRad float64 = pautil.DegreesToRadians(
+		pamacro.EclipticDeclination(planetCoordInfo.Longitude, 0, 0, planetCoordInfo.Latitude, 0, 0, localDateDay, localDateMonth, localDateYear))
+
+	var lightTravelTimeHours float64 = planetCoordInfo.DistanceAu * 0.1386
+
+	var planetInfo padata.PlanetRecord = padata.GetPlanetData(planetName)
+	var angularDiameterArcsec float64 = planetInfo.Theta0_AngularDiameter / planetCoordInfo.DistanceAu
+	var phase1 float64 = 0.5 * (1.0 + math.Cos(pautil.DegreesToRadians(planetCoordInfo.Longitude-planetCoordInfo.HLong1)))
+
+	var sunEclLongDeg float64 = pamacro.SunLong(lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear)
+	var sunRaRad float64 = pautil.DegreesToRadians(
+		pamacro.EclipticRightAscension(sunEclLongDeg, 0, 0, 0, 0, 0, greenwichDateDay, greenwichDateMonth, greenwichDateYear))
+	var sunDecRad float64 = pautil.DegreesToRadians(
+		pamacro.EclipticDeclination(sunEclLongDeg, 0, 0, 0, 0, 0, greenwichDateDay, greenwichDateMonth, greenwichDateYear))
+
+	var y float64 = math.Cos(sunDecRad) * math.Sin(sunRaRad-planetRaRad)
+	var x float64 = math.Cos(planetDecRad)*math.Sin(sunDecRad) - math.Sin(planetDecRad)*math.Cos(sunDecRad)*math.Cos(sunRaRad-planetRaRad)
+
+	var chiDeg float64 = pamacro.Degrees(math.Atan2(y, x))
+	var radiusVectorAu float64 = planetCoordInfo.RVect
+	var approximateMagnitude1 float64 = 5.0*math.Log10(radiusVectorAu*planetCoordInfo.DistanceAu/math.Sqrt(phase1)) + planetInfo.V0_VisualMagnitude
+
+	var distanceAu float64 = pautil.RoundTo(planetCoordInfo.DistanceAu, 5)
+	var angDiaArcsec float64 = pautil.RoundTo(angularDiameterArcsec, 1)
+	var phase float64 = pautil.RoundTo(phase1, 2)
+	var lightTimeHour int = pamacro.DecimalHoursHour(lightTravelTimeHours)
+	var lightTimeMinutes int = pamacro.DecimalHoursMinute(lightTravelTimeHours)
+	var lightTimeSeconds float64 = pamacro.DecimalHoursSecond(lightTravelTimeHours)
+	var posAngleBrightLimbDeg float64 = pautil.RoundTo(chiDeg, 1)
+	var approximateMagnitude float64 = pautil.RoundTo(approximateMagnitude1, 1)
+
+	return patype.PlanetVisualAspects{
+		DistanceAu: distanceAu, AngDiaArcsec: angDiaArcsec, Phase: phase,
+		LightTimeHour: float64(lightTimeHour), LightTimeMinutes: float64(lightTimeMinutes), LightTimeSeconds: lightTimeSeconds,
+		PosAngleBrightLimbDeg: posAngleBrightLimbDeg, ApproximateMagnitude: approximateMagnitude,
+	}
+}
