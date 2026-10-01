@@ -244,3 +244,35 @@ type PlanetCoordinates struct {
 	HLat       float64
 	RVect      float64
 }
+
+type PlanetLongLatL4685 struct {
+	QA float64
+	QB float64
+}
+
+type PlanetLongLatL4735 struct {
+	QA float64
+	QB float64
+	QC float64
+	QE float64
+}
+
+type PlanetLongLatL4810 struct {
+	A  float64
+	SA float64
+	CA float64
+	QC float64
+	QE float64
+	QA float64
+	QB float64
+}
+
+type PlanetLongLatL4945 struct {
+	QA float64
+	QB float64
+	QC float64
+	QD float64
+	QE float64
+	QF float64
+	QG float64
+}

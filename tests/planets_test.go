@@ -28,3 +28,14 @@ func TestApproximatePositionOfPlanet(t *testing.T) {
 
 	require.Equal(t, expectedApproximatePositionofPlanet, actualApproximatePositionofPlanet, "Mismatch in Approximate Position of Planet")
 }
+
+func TestPrecisePositionofPlanet(t *testing.T) {
+	var expectedPrecisePositionOfPlanet patype.PlanetPosition = patype.PlanetPosition{
+		RightAscensionHour: 11, RightAscensionMinutes: 10, RightAscensionSeconds: 30.99,
+		DeclinationDegrees: 6, DeclinationMinutes: 25, DeclinationSeconds: 49.46,
+	}
+
+	var actualPrecisePositionOfPlanet patype.PlanetPosition = palib.PrecisePositionOfPlanet(0, 0, 0, false, 0, 22, 11, 2003, "Jupiter")
+
+	require.Equal(t, expectedPrecisePositionOfPlanet, actualPrecisePositionOfPlanet, "Mismatch in Precise Position of Planet")
+}

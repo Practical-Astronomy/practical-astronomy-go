@@ -2,6 +2,7 @@ package lib
 
 import (
 	"math"
+	padata "practicalastro/lib/data"
 	pamacro "practicalastro/lib/macros"
 	patype "practicalastro/lib/types"
 	pautil "practicalastro/lib/util"
@@ -19,7 +20,7 @@ func ApproximatePositionOfPlanet(
 		daylightSaving = 0
 	}
 
-	var planetInfo PlanetRecord = GetPlanetData(planetName)
+	var planetInfo padata.PlanetRecord = padata.GetPlanetData(planetName)
 
 	var gDateDay float64 = pamacro.LocalCivilTimeGreenwichDay(
 		lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear)
@@ -40,7 +41,7 @@ func ApproximatePositionOfPlanet(
 	var rAu float64 = planetInfo.Axis_AxisOrbit * (1 - math.Pow(planetInfo.Ecc_EccentricityOrbit, 2)) /
 		(1 + planetInfo.Ecc_EccentricityOrbit*math.Cos(pautil.DegreesToRadians(planetTrueAnomalyDeg)))
 
-	var earthInfo PlanetRecord = GetPlanetData("Earth")
+	var earthInfo padata.PlanetRecord = padata.GetPlanetData("Earth")
 
 	var neDeg1 float64 = 360 * gDays / (365.242191 * earthInfo.Tp_PeriodOrbit)
 	var neDeg2 float64 = neDeg1 - 360*math.Floor(neDeg1/360)
@@ -85,6 +86,38 @@ func ApproximatePositionOfPlanet(
 	var planetDecDeg float64 = pamacro.DecimalDegreesDegrees(decDeg)
 	var planetDecMin float64 = pamacro.DecimalDegreesMinutes(decDeg)
 	var planetDecSec float64 = pamacro.DecimalDegreesSeconds(decDeg)
+
+	return patype.PlanetPosition{
+		RightAscensionHour: float64(planetRaHour), RightAscensionMinutes: float64(planetRaMin), RightAscensionSeconds: planetRaSec,
+		DeclinationDegrees: planetDecDeg, DeclinationMinutes: planetDecMin, DeclinationSeconds: planetDecSec,
+	}
+}
+
+/* Calculate precise position of a planet. */
+func PrecisePositionOfPlanet(
+	lctHour float64, lctMin float64, lctSec float64, isDaylightSaving bool, zoneCorrectionHours int,
+	localDateDay float64, localDateMonth int, localDateYear int, planetName string) patype.PlanetPosition {
+	var daylightSaving int
+	if isDaylightSaving {
+		daylightSaving = 1
+	} else {
+		daylightSaving = 0
+	}
+
+	var coordinateResults patype.PlanetCoordinates = pamacro.PlanetCoordinates(
+		lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear, planetName)
+
+	var planetRaHours float64 = pamacro.DecimalDegreesToDegreeHours(
+		pamacro.EclipticRightAscension(coordinateResults.Longitude, 0, 0, coordinateResults.Latitude, 0, 0, localDateDay, localDateMonth, localDateYear))
+	var planetDecDeg1 float64 = pamacro.EclipticDeclination(
+		coordinateResults.Longitude, 0, 0, coordinateResults.Latitude, 0, 0, localDateDay, localDateMonth, localDateYear)
+
+	var planetRaHour int = pamacro.DecimalHoursHour(planetRaHours)
+	var planetRaMin int = pamacro.DecimalHoursMinute(planetRaHours)
+	var planetRaSec float64 = pamacro.DecimalHoursSecond(planetRaHours)
+	var planetDecDeg float64 = pamacro.DecimalDegreesDegrees(planetDecDeg1)
+	var planetDecMin float64 = pamacro.DecimalDegreesMinutes(planetDecDeg1)
+	var planetDecSec float64 = pamacro.DecimalDegreesSeconds(planetDecDeg1)
 
 	return patype.PlanetPosition{
 		RightAscensionHour: float64(planetRaHour), RightAscensionMinutes: float64(planetRaMin), RightAscensionSeconds: planetRaSec,

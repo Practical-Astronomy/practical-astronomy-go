@@ -2,6 +2,7 @@ package macros
 
 import (
 	"math"
+	padata "practicalastro/lib/data"
 	patype "practicalastro/lib/types"
 	pautil "practicalastro/lib/util"
 )
@@ -554,8 +555,8 @@ Convert Decimal Degrees to Degree-Hours
 
 Original macro name: DDDH
 */
-func DecimalDegreesToDegreeHours(decimal_degrees float64) float64 {
-	return decimal_degrees / 15
+func DecimalDegreesToDegreeHours(decimalDegrees float64) float64 {
+	return decimalDegrees / 15
 }
 
 /*
@@ -563,8 +564,8 @@ Convert Degree-Hours to Decimal Degrees
 
 Original macro name: DHDD
 */
-func DegreeHoursToDecimalDegrees(degree_hours float64) float64 {
-	return degree_hours * 15
+func DegreeHoursToDecimalDegrees(degreeHours float64) float64 {
+	return degreeHours * 15
 }
 
 /*
@@ -1516,6 +1517,27 @@ func SunTrueAnomaly(lch float64, lcm float64, lcs float64, ds int, zc int, ld fl
 }
 
 /*
+Calculate the Sun's mean anomaly.
+
+Original macro name: SunMeanAnomaly
+*/
+func SunMeanAnomaly(lch float64, lcm float64, lcs float64, ds int, zc int, ld float64, lm int, ly int) float64 {
+	var aa float64 = LocalCivilTimeGreenwichDay(lch, lcm, lcs, ds, zc, ld, lm, ly)
+	var bb int = int(LocalCivilTimeGreenwichMonth(lch, lcm, lcs, ds, zc, ld, lm, ly))
+	var cc int = int(LocalCivilTimeGreenwichYear(lch, lcm, lcs, ds, zc, ld, lm, ly))
+	var ut float64 = LocalCivilTimeToUniversalTime(lch, lcm, lcs, ds, zc, ld, lm, ly)
+	var dj float64 = CivilDateToJulianDate(aa, float64(bb), float64(cc)) - 2415020
+	var t float64 = (dj / 36525) + (ut / 876600)
+	var t2 float64 = t * t
+	var a float64 = 100.0021359 * t
+	var b float64 = 360 * (a - math.Floor(a))
+	var m1 float64 = 358.47583 - (0.00015+0.0000033*t)*t2 + b
+	var am float64 = Unwind(pautil.DegreesToRadians(m1))
+
+	return am
+}
+
+/*
 Calculate local civil time of sunrise.
 
 Original macro name: SunriseLCT
@@ -2080,4 +2102,887 @@ func Angle(
 	var i float64 = math.Acos(math.Sin(d)*math.Sin(h) + math.Cos(d)*math.Cos(h)*math.Cos(b-f))
 
 	return Degrees(i)
+}
+
+/* Calculate several planetary properties. */
+func PlanetCoordinates(lh float64, lm float64, ls float64, ds int, zc int, dy float64, mn int, yr int, s string) patype.PlanetCoordinates {
+	var a11 float64 = 178.179078
+	var a12 float64 = 415.2057519
+	var a13 float64 = 0.0003011
+	var a14 float64 = 0.0
+	var a21 float64 = 75.899697
+	var a22 float64 = 1.5554889
+	var a23 float64 = 0.0002947
+	var a24 float64 = 0.0
+	var a31 float64 = 0.20561421
+	var a32 float64 = 0.00002046
+	var a33 float64 = -0.00000003
+	var a34 float64 = 0.0
+	var a41 float64 = 7.002881
+	var a42 float64 = 0.0018608
+	var a43 float64 = -0.0000183
+	var a44 float64 = 0.0
+	var a51 float64 = 47.145944
+	var a52 float64 = 1.1852083
+	var a53 float64 = 0.0001739
+	var a54 float64 = 0.0
+	var a61 float64 = 0.3870986
+	var a62 float64 = 6.74
+	var a63 float64 = -0.42
+
+	var b11 float64 = 342.767053
+	var b12 float64 = 162.5533664
+	var b13 float64 = 0.0003097
+	var b14 float64 = 0.0
+	var b21 float64 = 130.163833
+	var b22 float64 = 1.4080361
+	var b23 float64 = -0.0009764
+	var b24 float64 = 0.0
+	var b31 float64 = 0.00682069
+	var b32 float64 = -0.00004774
+	var b33 float64 = 0.000000091
+	var b34 float64 = 0.0
+	var b41 float64 = 3.393631
+	var b42 float64 = 0.0010058
+	var b43 float64 = -0.000001
+	var b44 float64 = 0.0
+	var b51 float64 = 75.779647
+	var b52 float64 = 0.89985
+	var b53 float64 = 0.00041
+	var b54 float64 = 0.0
+	var b61 float64 = 0.7233316
+	var b62 float64 = 16.92
+	var b63 float64 = -4.4
+
+	var c11 float64 = 293.737334
+	var c12 float64 = 53.17137642
+	var c13 float64 = 0.0003107
+	var c14 float64 = 0.0
+	var c21 float64 = 334.218203
+	var c22 float64 = 1.8407584
+	var c23 float64 = 0.0001299
+	var c24 float64 = -0.00000119
+	var c31 float64 = 0.0933129
+	var c32 float64 = 0.000092064
+	var c33 float64 = -0.000000077
+	var c34 float64 = 0.0
+	var c41 float64 = 1.850333
+	var c42 float64 = -0.000675
+	var c43 float64 = 0.0000126
+	var c44 float64 = 0.0
+	var c51 float64 = 48.786442
+	var c52 float64 = 0.7709917
+	var c53 float64 = -0.0000014
+	var c54 float64 = -0.00000533
+	var c61 float64 = 1.5236883
+	var c62 float64 = 9.36
+	var c63 float64 = -1.52
+
+	var d11 float64 = 238.049257
+	var d12 float64 = 8.434172183
+	var d13 float64 = 0.0003347
+	var d14 float64 = -0.00000165
+	var d21 float64 = 12.720972
+	var d22 float64 = 1.6099617
+	var d23 float64 = 0.00105627
+	var d24 float64 = -0.00000343
+	var d31 float64 = 0.04833475
+	var d32 float64 = 0.00016418
+	var d33 float64 = -0.0000004676
+	var d34 float64 = -0.0000000017
+	var d41 float64 = 1.308736
+	var d42 float64 = -0.0056961
+	var d43 float64 = 0.0000039
+	var d44 float64 = 0.0
+	var d51 float64 = 99.443414
+	var d52 float64 = 1.01053
+	var d53 float64 = 0.00035222
+	var d54 float64 = -0.00000851
+	var d61 float64 = 5.202561
+	var d62 float64 = 196.74
+	var d63 float64 = -9.4
+
+	var e11 float64 = 266.564377
+	var e12 float64 = 3.398638567
+	var e13 float64 = 0.0003245
+	var e14 float64 = -0.0000058
+	var e21 float64 = 91.098214
+	var e22 float64 = 1.9584158
+	var e23 float64 = 0.00082636
+	var e24 float64 = 0.00000461
+	var e31 float64 = 0.05589232
+	var e32 float64 = -0.0003455
+	var e33 float64 = -0.000000728
+	var e34 float64 = 0.00000000074
+	var e41 float64 = 2.492519
+	var e42 float64 = -0.0039189
+	var e43 float64 = -0.00001549
+	var e44 float64 = 0.00000004
+	var e51 float64 = 112.790414
+	var e52 float64 = 0.8731951
+	var e53 float64 = -0.00015218
+	var e54 float64 = -0.00000531
+	var e61 float64 = 9.554747
+	var e62 float64 = 165.6
+	var e63 float64 = -8.88
+
+	var f11 float64 = 244.19747
+	var f12 float64 = 1.194065406
+	var f13 float64 = 0.000316
+	var f14 float64 = -0.0000006
+	var f21 float64 = 171.548692
+	var f22 float64 = 1.4844328
+	var f23 float64 = 0.0002372
+	var f24 float64 = -0.00000061
+	var f31 float64 = 0.0463444
+	var f32a float64 = -0.00002658
+	var f33 float64 = 0.000000077
+	var f34 float64 = 0.0
+	var f41 float64 = 0.772464
+	var f42 float64 = 0.0006253
+	var f43 float64 = 0.0000395
+	var f44 float64 = 0.0
+	var f51 float64 = 73.477111
+	var f52 float64 = 0.4986678
+	var f53 float64 = 0.0013117
+	var f54 float64 = 0.0
+	var f61 float64 = 19.21814
+	var f62 float64 = 65.8
+	var f63 float64 = -7.19
+
+	var g11 float64 = 84.457994
+	var g12 float64 = 0.6107942056
+	var g13 float64 = 0.0003205
+	var g14 float64 = -0.0000006
+	var g21 float64 = 46.727364
+	var g22 float64 = 1.4245744
+	var g23 float64 = 0.00039082
+	var g24 float64 = -0.000000605
+	var g31 float64 = 0.00899704
+	var g32 float64 = 0.00000633
+	var g33 float64 = -0.000000002
+	var g34 float64 = 0.0
+	var g41 float64 = 1.779242
+	var g42 float64 = -0.0095436
+	var g43 float64 = -0.0000091
+	var g44 float64 = 0.0
+	var g51 float64 = 130.681389
+	var g52 float64 = 1.098935
+	var g53 float64 = 0.00024987
+	var g54 float64 = -0.000004718
+	var g61 float64 = 30.10957
+	var g62 float64 = 62.2
+	var g63 float64 = -6.87
+
+	var pl [9]padata.PlanetDataPrecise
+
+	pl[0] = padata.PopulatePrecisePlanetData("", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+
+	var ip int = 0
+	var b float64 = LocalCivilTimeToUniversalTime(lh, lm, ls, ds, zc, dy, mn, yr)
+	var gd float64 = LocalCivilTimeGreenwichDay(lh, lm, ls, ds, zc, dy, mn, yr)
+	var gm int = int(LocalCivilTimeGreenwichMonth(lh, lm, ls, ds, zc, dy, mn, yr))
+	var gy int = int(LocalCivilTimeGreenwichYear(lh, lm, ls, ds, zc, dy, mn, yr))
+	var a float64 = CivilDateToJulianDate(gd, float64(gm), float64(gy))
+	var t float64 = ((a - 2415020.0) / 36525.0) + (b / 876600.0)
+
+	var a0 float64 = a11
+	var a1 float64 = a12
+	var a2 float64 = a13
+	var a3 float64 = a14
+	var b0 float64 = a21
+	var b1 float64 = a22
+	var b2 float64 = a23
+	var b3 float64 = a24
+	var c0 float64 = a31
+	var c1 float64 = a32
+	var c2 float64 = a33
+	var c3 float64 = a34
+	var d0 float64 = a41
+	var d1 float64 = a42
+	var d2 float64 = a43
+	var d3 float64 = a44
+	var e0 float64 = a51
+	var e1 float64 = a52
+	var e2 float64 = a53
+	var e3 float64 = a54
+	var f float64 = a61
+	var g float64 = a62
+	var h float64 = a63
+	var aa float64 = a1 * t
+	b = 360.0 * (aa - math.Floor(aa))
+	var c float64 = a0 + b + (a3*t+a2)*t*t
+
+	pl[1] = padata.PopulatePrecisePlanetData(
+		"Mercury", c-360.0*math.Floor(c/360.0), (a1*0.009856263)+(a2+a3)/36525.0, ((b3*t+b2)*t+b1)*t+b0, ((c3*t+c2)*t+c1)*t+c0,
+		((d3*t+d2)*t+d1)*t+d0, ((e3*t+e2)*t+e1)*t+e0, f, g, h, 0,
+	)
+
+	a0 = b11
+	a1 = b12
+	a2 = b13
+	a3 = b14
+	b0 = b21
+	b1 = b22
+	b2 = b23
+	b3 = b24
+	c0 = b31
+	c1 = b32
+	c2 = b33
+	c3 = b34
+	d0 = b41
+	d1 = b42
+	d2 = b43
+	d3 = b44
+	e0 = b51
+	e1 = b52
+	e2 = b53
+	e3 = b54
+	f = b61
+	g = b62
+	h = b63
+	aa = a1 * t
+	b = 360.0 * (aa - math.Floor(aa))
+	c = a0 + b + (a3*t+a2)*t*t
+
+	pl[2] = padata.PopulatePrecisePlanetData(
+		"Venus", c-360.0*math.Floor(c/360.0), (a1*0.009856263)+(a2+a3)/36525.0, ((b3*t+b2)*t+b1)*t+b0, ((c3*t+c2)*t+c1)*t+c0,
+		((d3*t+d2)*t+d1)*t+d0, ((e3*t+e2)*t+e1)*t+e0, f, g, h, 0,
+	)
+
+	a0 = c11
+	a1 = c12
+	a2 = c13
+	a3 = c14
+	b0 = c21
+	b1 = c22
+	b2 = c23
+	b3 = c24
+	c0 = c31
+	c1 = c32
+	c2 = c33
+	c3 = c34
+	d0 = c41
+	d1 = c42
+	d2 = c43
+	d3 = c44
+	e0 = c51
+	e1 = c52
+	e2 = c53
+	e3 = c54
+	f = c61
+	g = c62
+	h = c63
+
+	aa = a1 * t
+	b = 360.0 * (aa - math.Floor(aa))
+	c = a0 + b + (a3*t+a2)*t*t
+
+	pl[3] = padata.PopulatePrecisePlanetData(
+		"Mars", c-360.0*math.Floor(c/360.0), (a1*0.009856263)+(a2+a3)/36525.0, ((b3*t+b2)*t+b1)*t+b0, ((c3*t+c2)*t+c1)*t+c0,
+		((d3*t+d2)*t+d1)*t+d0, ((e3*t+e2)*t+e1)*t+e0, f, g, h, 0,
+	)
+
+	a0 = d11
+	a1 = d12
+	a2 = d13
+	a3 = d14
+	b0 = d21
+	b1 = d22
+	b2 = d23
+	b3 = d24
+	c0 = d31
+	c1 = d32
+	c2 = d33
+	c3 = d34
+	d0 = d41
+	d1 = d42
+	d2 = d43
+	d3 = d44
+	e0 = d51
+	e1 = d52
+	e2 = d53
+	e3 = d54
+	f = d61
+	g = d62
+	h = d63
+
+	aa = a1 * t
+	b = 360.0 * (aa - math.Floor(aa))
+	c = a0 + b + (a3*t+a2)*t*t
+
+	pl[4] = padata.PopulatePrecisePlanetData(
+		"Jupiter", c-360.0*math.Floor(c/360.0), (a1*0.009856263)+(a2+a3)/36525.0, ((b3*t+b2)*t+b1)*t+b0, ((c3*t+c2)*t+c1)*t+c0,
+		((d3*t+d2)*t+d1)*t+d0, ((e3*t+e2)*t+e1)*t+e0, f, g, h, 0,
+	)
+
+	a0 = e11
+	a1 = e12
+	a2 = e13
+	a3 = e14
+	b0 = e21
+	b1 = e22
+	b2 = e23
+	b3 = e24
+	c0 = e31
+	c1 = e32
+	c2 = e33
+	c3 = e34
+	d0 = e41
+	d1 = e42
+	d2 = e43
+	d3 = e44
+	e0 = e51
+	e1 = e52
+	e2 = e53
+	e3 = e54
+	f = e61
+	g = e62
+	h = e63
+
+	aa = a1 * t
+	b = 360.0 * (aa - math.Floor(aa))
+	c = a0 + b + (a3*t+a2)*t*t
+
+	pl[5] = padata.PopulatePrecisePlanetData(
+		"Saturn", c-360.0*math.Floor(c/360.0), (a1*0.009856263)+(a2+a3)/36525.0, ((b3*t+b2)*t+b1)*t+b0, ((c3*t+c2)*t+c1)*t+c0,
+		((d3*t+d2)*t+d1)*t+d0, ((e3*t+e2)*t+e1)*t+e0, f, g, h, 0,
+	)
+
+	a0 = f11
+	a1 = f12
+	a2 = f13
+	a3 = f14
+	b0 = f21
+	b1 = f22
+	b2 = f23
+	b3 = f24
+	c0 = f31
+	c1 = f32a
+	c2 = f33
+	c3 = f34
+	d0 = f41
+	d1 = f42
+	d2 = f43
+	d3 = f44
+	e0 = f51
+	e1 = f52
+	e2 = f53
+	e3 = f54
+	f = f61
+	g = f62
+	h = f63
+
+	aa = a1 * t
+	b = 360.0 * (aa - math.Floor(aa))
+	c = a0 + b + (a3*t+a2)*t*t
+
+	pl[6] = padata.PopulatePrecisePlanetData(
+		"Uranus", c-360.0*math.Floor(c/360.0), (a1*0.009856263)+(a2+a3)/36525.0, ((b3*t+b2)*t+b1)*t+b0, ((c3*t+c2)*t+c1)*t+c0,
+		((d3*t+d2)*t+d1)*t+d0, ((e3*t+e2)*t+e1)*t+e0, f, g, h, 0,
+	)
+
+	a0 = g11
+	a1 = g12
+	a2 = g13
+	a3 = g14
+	b0 = g21
+	b1 = g22
+	b2 = g23
+	b3 = g24
+	c0 = g31
+	c1 = g32
+	c2 = g33
+	c3 = g34
+	d0 = g41
+	d1 = g42
+	d2 = g43
+	d3 = g44
+	e0 = g51
+	e1 = g52
+	e2 = g53
+	e3 = g54
+	f = g61
+	g = g62
+	h = g63
+
+	aa = a1 * t
+	b = 360.0 * (aa - math.Floor(aa))
+	c = a0 + b + (a3*t+a2)*t*t
+
+	pl[7] = padata.PopulatePrecisePlanetData(
+		"Neptune", c-360.0*math.Floor(c/360.0), (a1*0.009856263)+(a2+a3)/36525.0, ((b3*t+b2)*t+b1)*t+b0, ((c3*t+c2)*t+c1)*t+c0,
+		((d3*t+d2)*t+d1)*t+d0, ((e3*t+e2)*t+e1)*t+e0, f, g, h, 0,
+	)
+
+	var checkPlanet padata.PlanetDataPrecise = padata.GetPrecisePlanetData(s, pl[:])
+
+	if checkPlanet.Name == "NOTFOUND" {
+		return patype.PlanetCoordinates{
+			Longitude: Degrees(Unwind(0)), Latitude: Degrees(Unwind(0)), DistanceAu: Degrees(Unwind(0)),
+			HLong1: Degrees(Unwind(0)), HLong2: Degrees(Unwind(0)), HLat: Degrees(Unwind(0)), RVect: Degrees(Unwind(0)),
+		}
+	}
+
+	var li float64 = 0.0
+	var ms float64 = SunMeanAnomaly(lh, lm, ls, ds, zc, dy, mn, yr)
+	var sr float64 = pautil.DegreesToRadians(SunLong(lh, lm, ls, ds, zc, dy, mn, yr))
+	var re float64 = SunDist(lh, lm, ls, ds, zc, dy, mn, yr)
+	var lg float64 = sr + math.Pi
+
+	var l0 float64 = 0.0
+	var s0 float64 = 0.0
+	var p0 float64 = 0.0
+	var vo float64 = 0.0
+	var lp1 float64 = 0.0
+	var ll float64 = 0.0
+	var rd float64 = 0.0
+	var pd float64 = 0.0
+	var sp float64 = 0.0
+	var ci float64 = 0.0
+
+	for k := 1; k <= 3; k++ {
+		for i := range len(pl) {
+			pl[i].ApValue = pautil.DegreesToRadians(pl[i].Value1 - pl[i].Value3 - li*pl[i].Value2)
+		}
+
+		var qa float64 = 0.0
+		var qb float64 = 0.0
+		var qc float64 = 0.0
+		var qd float64 = 0.0
+		var qe float64 = 0.0
+		var qf float64 = 0.0
+		var qg float64 = 0.0
+
+		if s == "Mercury" {
+			var tempResult patype.PlanetLongLatL4685 = PlanetLongL4685(pl[:])
+
+			qa = tempResult.QA
+			qb = tempResult.QB
+		}
+
+		if s == "Venus" {
+			var tempResult patype.PlanetLongLatL4735 = PlanetLongL4735(pl[:], ms, t)
+
+			qa = tempResult.QA
+			qb = tempResult.QB
+			qc = tempResult.QC
+			qe = tempResult.QE
+		}
+
+		if s == "Mars" {
+			var tempResult patype.PlanetLongLatL4810 = PlanetLongL4810(pl[:], ms)
+
+			qc = tempResult.QC
+			qe = tempResult.QE
+			qa = tempResult.QA
+			qb = tempResult.QB
+		}
+
+		var matchPlanet padata.PlanetDataPrecise = padata.GetPrecisePlanetData(s, pl[:])
+
+		if s == "Jupiter" || s == "Saturn" || s == "Uranus" || s == "Neptune" {
+			var tempResult patype.PlanetLongLatL4945 = PlanetLongL4945(t, matchPlanet)
+
+			qa = tempResult.QA
+			qb = tempResult.QB
+			qc = tempResult.QC
+			qd = tempResult.QD
+			qe = tempResult.QE
+			qf = tempResult.QF
+			qg = tempResult.QG
+		}
+
+		var ec float64 = matchPlanet.Value4 + qd
+		var am float64 = matchPlanet.ApValue + qe
+		var at float64 = TrueAnomaly(am, ec)
+		var pvv float64 = (matchPlanet.Value7 + qf) * (1.0 - ec*ec) / (1.0 + ec*math.Cos(at))
+		var lp float64 = Degrees(at) + matchPlanet.Value3 + Degrees(qc-qe)
+		lp = pautil.DegreesToRadians(lp)
+		var om float64 = pautil.DegreesToRadians(matchPlanet.Value6)
+		var lo float64 = lp - om
+		var so float64 = math.Sin(lo)
+		var co float64 = math.Cos(lo)
+		var inn float64 = pautil.DegreesToRadians(matchPlanet.Value5)
+		pvv += qb
+		sp = so * math.Sin(inn)
+		var y float64 = so * math.Cos(inn)
+		var ps float64 = math.Asin(sp) + qg
+		sp = math.Sin(ps)
+		pd = math.Atan2(y, co) + om + pautil.DegreesToRadians(qa)
+		pd = Unwind(pd)
+		ci = math.Cos(ps)
+		rd = pvv * ci
+		ll = pd - lg
+		var rh float64 = re*re + pvv*pvv - 2.0*re*pvv*ci*math.Cos(ll)
+		rh = math.Sqrt(rh)
+		li = rh * 0.005775518
+
+		if k == 1 {
+			l0 = pd
+			s0 = ps
+			p0 = pvv
+			vo = rh
+			lp1 = lp
+		}
+	}
+
+	var l1 float64 = math.Sin(ll)
+	var l2 float64 = math.Cos(ll)
+
+	var ep float64 = 0
+	if ip < 3 {
+		ep = math.Atan(-1.0*rd*l1/(re-rd*l2)) + lg + math.Pi
+	} else {
+		ep = math.Atan(re*l1/(rd-re*l2)) + pd
+	}
+
+	ep = Unwind(ep)
+
+	var bp float64 = math.Atan(rd * sp * math.Sin(ep-pd) / (ci * re * l1))
+
+	var planetLongitude float64 = Degrees(Unwind(ep))
+	var planetLatitude float64 = Degrees(Unwind(bp))
+	var planetDistanceAU float64 = vo
+	var planetHLong1 float64 = Degrees(lp1)
+	var planetHLong2 float64 = Degrees(l0)
+	var planetHLat float64 = Degrees(s0)
+	var planetRVect float64 = p0
+
+	return patype.PlanetCoordinates{
+		Longitude: planetLongitude, Latitude: planetLatitude, DistanceAu: planetDistanceAU,
+		HLong1: planetHLong1, HLong2: planetHLong2, HLat: planetHLat, RVect: planetRVect,
+	}
+}
+
+/* Helper function for planet_long_lat() */
+func PlanetLongL4685(pl []padata.PlanetDataPrecise) patype.PlanetLongLatL4685 {
+	var qa float64 = 0.00204 * math.Cos(5.0*pl[2].ApValue-2.0*pl[1].ApValue+0.21328)
+	qa += 0.00103 * math.Cos(2.0*pl[2].ApValue-pl[1].ApValue-2.8046)
+	qa += 0.00091 * math.Cos(2.0*pl[4].ApValue-pl[1].ApValue-0.64582)
+	qa += 0.00078 * math.Cos(5.0*pl[2].ApValue-3.0*pl[1].ApValue+0.17692)
+
+	var qb float64 = 0.000007525 * math.Cos(2.0*pl[4].ApValue-pl[1].ApValue+0.925251)
+	qb += 0.000006802 * math.Cos(5.0*pl[2].ApValue-3.0*pl[1].ApValue-4.53642)
+	qb += 0.000005457 * math.Cos(2.0*pl[2].ApValue-2.0*pl[1].ApValue-1.24246)
+	qb += 0.000003569 * math.Cos(5.0*pl[2].ApValue-pl[1].ApValue-1.35699)
+
+	return patype.PlanetLongLatL4685{QA: qa, QB: qb}
+}
+
+/* Helper function for planet_long_lat() */
+func PlanetLongL4735(pl []padata.PlanetDataPrecise, ms float64, t float64) patype.PlanetLongLatL4735 {
+	var qc float64 = 0.00077 * math.Sin(4.1406+t*2.6227)
+	qc = pautil.DegreesToRadians(qc)
+	var qe float64 = qc
+
+	var qa float64 = 0.00313 * math.Cos(2.0*ms-2.0*pl[2].ApValue-2.587)
+	qa += 0.00198 * math.Cos(3.0*ms-3.0*pl[2].ApValue+0.044768)
+	qa += 0.00136 * math.Cos(ms-pl[2].ApValue-2.0788)
+	qa += 0.00096 * math.Cos(3.0*ms-2.0*pl[2].ApValue-2.3721)
+	qa += 0.00082 * math.Cos(pl[4].ApValue-pl[2].ApValue-3.6318)
+
+	var qb float64 = 0.000022501 * math.Cos(2.0*ms-2.0*pl[2].ApValue-1.01592)
+	qb += 0.000019045 * math.Cos(3.0*ms-3.0*pl[2].ApValue+1.61577)
+	qb += 0.000006887 * math.Cos(pl[4].ApValue-pl[2].ApValue-2.06106)
+	qb += 0.000005172 * math.Cos(ms-pl[2].ApValue-0.508065)
+	qb += 0.00000362 * math.Cos(5.0*ms-4.0*pl[2].ApValue-1.81877)
+	qb += 0.000003283 * math.Cos(4.0*ms-4.0*pl[2].ApValue+1.10851)
+	qb += 0.000003074 * math.Cos(2.0*pl[4].ApValue-2.0*pl[2].ApValue-0.962846)
+
+	return patype.PlanetLongLatL4735{QA: qa, QB: qb, QC: qc, QE: qe}
+}
+
+/* Helper function for planet_long_lat() */
+func PlanetLongL4810(pl []padata.PlanetDataPrecise, ms float64) patype.PlanetLongLatL4810 {
+	var a float64 = 3.0*pl[4].ApValue - 8.0*pl[3].ApValue + 4.0*ms
+	var sa float64 = math.Sin(a)
+	var ca float64 = math.Cos(a)
+	var qc float64 = -(0.01133*sa + 0.00933*ca)
+	qc = pautil.DegreesToRadians(qc)
+	var qe float64 = qc
+
+	var qa float64 = 0.00705 * math.Cos(pl[4].ApValue-pl[3].ApValue-0.85448)
+	qa += 0.00607 * math.Cos(2.0*pl[4].ApValue-pl[3].ApValue-3.2873)
+	qa += 0.00445 * math.Cos(2.0*pl[4].ApValue-2.0*pl[3].ApValue-3.3492)
+	qa += 0.00388 * math.Cos(ms-2.0*pl[3].ApValue+0.35771)
+	qa += 0.00238 * math.Cos(ms-pl[3].ApValue+0.61256)
+	qa += 0.00204 * math.Cos(2.0*ms-3.0*pl[3].ApValue+2.7688)
+	qa += 0.00177 * math.Cos(3.0*pl[3].ApValue-pl[2].ApValue-1.0053)
+	qa += 0.00136 * math.Cos(2.0*ms-4.0*pl[3].ApValue+2.6894)
+	qa += 0.00104 * math.Cos(pl[4].ApValue+0.30749)
+
+	var qb float64 = 0.000053227 * math.Cos(pl[4].ApValue-pl[3].ApValue+0.717864)
+	qb += 0.000050989 * math.Cos(2.0*pl[4].ApValue-2.0*pl[3].ApValue-1.77997)
+	qb += 0.000038278 * math.Cos(2.0*pl[4].ApValue-pl[3].ApValue-1.71617)
+	qb += 0.000015996 * math.Cos(ms-pl[3].ApValue-0.969618)
+	qb += 0.000014764 * math.Cos(2.0*ms-3.0*pl[3].ApValue+1.19768)
+	qb += 0.000008966 * math.Cos(pl[4].ApValue-2.0*pl[3].ApValue+0.761225)
+	qb += 0.000007914 * math.Cos(3.0*pl[4].ApValue-2.0*pl[3].ApValue-2.43887)
+	qb += 0.000007004 * math.Cos(2.0*pl[4].ApValue-3.0*pl[3].ApValue-1.79573)
+	qb += 0.00000662 * math.Cos(ms-2.0*pl[3].ApValue+1.97575)
+	qb += 0.00000493 * math.Cos(3.0*pl[4].ApValue-3.0*pl[3].ApValue-1.33069)
+	qb += 0.000004693 * math.Cos(3.0*ms-5.0*pl[3].ApValue+3.32665)
+	qb += 0.000004571 * math.Cos(2.0*ms-4.0*pl[3].ApValue+4.27086)
+	qb += 0.000004409 * math.Cos(3.0*pl[4].ApValue-pl[3].ApValue-2.02158)
+
+	return patype.PlanetLongLatL4810{A: a, SA: sa, CA: ca, QC: qc, QE: qe, QA: qa, QB: qb}
+}
+
+/* Helper function for planet_long_lat() */
+func PlanetLongL4945(t float64, planet padata.PlanetDataPrecise) patype.PlanetLongLatL4945 {
+	var qa float64 = 0.0
+	var qb float64 = 0.0
+	var qc float64 = 0.0
+	var qd float64 = 0.0
+	var qe float64 = 0.0
+	var qf float64 = 0.0
+	var qg float64 = 0.0
+	var vk float64 = 0.0
+	var ja float64 = 0.0
+	var jb float64 = 0.0
+	var jc float64 = 0.0
+
+	var j1 float64 = t/5.0 + 0.1
+	var j2 float64 = Unwind(4.14473 + 52.9691*t)
+	var j3 float64 = Unwind(4.641118 + 21.32991*t)
+	var j4 float64 = Unwind(4.250177 + 7.478172*t)
+	var j5 float64 = 5.0*j3 - 2.0*j2
+	var j6 float64 = 2.0*j2 - 6.0*j3 + 3.0*j4
+
+	if planet.Name == "Mercury" || planet.Name == "Venus" || planet.Name == "Mars" {
+		return patype.PlanetLongLatL4945{QA: qa, QB: qb, QC: qc, QD: qd, QE: qe, QF: qf, QG: qg}
+	}
+
+	if planet.Name == "Jupiter" || planet.Name == "Saturn" {
+		var j7 float64 = j3 - j2
+		var u1 float64 = math.Sin(j3)
+		var u2 float64 = math.Cos(j3)
+		var u3 float64 = math.Sin(2.0 * j3)
+		var u4 float64 = math.Cos(2.0 * j3)
+		var u5 float64 = math.Sin(j5)
+		var u6 float64 = math.Cos(j5)
+		var u7 float64 = math.Sin(2.0 * j5)
+		var u8a float64 = math.Sin(j6)
+		var u9 float64 = math.Sin(j7)
+		var ua float64 = math.Cos(j7)
+		var ub float64 = math.Sin(2.0 * j7)
+		var uc float64 = math.Cos(2.0 * j7)
+		var ud float64 = math.Sin(3.0 * j7)
+		var ue float64 = math.Cos(3.0 * j7)
+		var uf float64 = math.Sin(4.0 * j7)
+		var ug float64 = math.Cos(4.0 * j7)
+		var vh float64 = math.Cos(5.0 * j7)
+
+		if planet.Name == "Saturn" {
+			var ui float64 = math.Sin(3.0 * j3)
+			var uj float64 = math.Cos(3.0 * j3)
+			var uk float64 = math.Sin(4.0 * j3)
+			var ul float64 = math.Cos(4.0 * j3)
+			var vi float64 = math.Cos(2.0 * j5)
+			var un float64 = math.Sin(5.0 * j7)
+			var j8 float64 = j4 - j3
+			var uo float64 = math.Sin(2.0 * j8)
+			var up float64 = math.Cos(2.0 * j8)
+			var uq float64 = math.Sin(3.0 * j8)
+			var ur float64 = math.Cos(3.0 * j8)
+
+			qc = 0.007581*u7 - 0.007986*u8a - 0.148811*u9
+			qc -= (0.814181 - (0.01815-0.016714*j1)*j1) * u5
+			qc -= (0.010497 - (0.160906-0.0041*j1)*j1) * u6
+			qc = qc - 0.015208*ud - 0.006339*uf - 0.006244*u1
+			qc = qc - 0.0165*ub*u1 - 0.040786*ub
+			qc = qc + (0.008931+0.002728*j1)*u9*u1 - 0.005775*ud*u1
+			qc = qc + (0.081344+0.003206*j1)*ua*u1 + 0.015019*uc*u1
+			qc = qc + (0.085581+0.002494*j1)*u9*u2 + 0.014394*uc*u2
+			qc = qc + (0.025328-0.003117*j1)*ua*u2 + 0.006319*ue*u2
+			qc = qc + 0.006369*u9*u3 + 0.009156*ub*u3 + 0.007525*uq*u3
+			qc = qc - 0.005236*ua*u4 - 0.007736*uc*u4 - 0.007528*ur*u4
+			qc = pautil.DegreesToRadians(qc)
+
+			qd = (-7927.0 + (2548.0+91.0*j1)*j1) * u5
+			qd = qd + (13381.0+(1226.0-253.0*j1)*j1)*u6 + (248.0-121.0*j1)*u7
+			qd = qd - (305.0+91.0*j1)*vi + 412.0*ub + 12415.0*u1
+			qd = qd + (390.0-617.0*j1)*u9*u1 + (165.0-204.0*j1)*ub*u1
+			qd = qd + 26599.0*ua*u1 - 4687.0*uc*u1 - 1870.0*ue*u1 - 821.0*ug*u1
+			qd = qd - 377.0*vh*u1 + 497.0*up*u1 + (163.0-611.0*j1)*u2
+			qd = qd - 12696.0*u9*u2 - 4200.0*ub*u2 - 1503.0*ud*u2 - 619.0*uf*u2
+			qd = qd - 268.0*un*u2 - (282.0+1306.0*j1)*ua*u2
+			qd = qd + (-86.0+230.0*j1)*uc*u2 + 461.0*uo*u2 - 350.0*u3
+			qd = qd + (2211.0-286.0*j1)*u9*u3 - 2208.0*ub*u3 - 568.0*ud*u3
+			qd = qd - 346.0*uf*u3 - (2780.0+222.0*j1)*ua*u3
+			qd = qd + (2022.0+263.0*j1)*uc*u3 + 248.0*ue*u3 + 242.0*uq*u3
+			qd = qd + 467.0*ur*u3 - 490.0*u4 - (2842.0+279.0*j1)*u9*u4
+			qd = qd + (128.0+226.0*j1)*ub*u4 + 224.0*ud*u4
+			qd = qd + (-1594.0+282.0*j1)*ua*u4 + (2162.0-207.0*j1)*uc*u4
+			qd = qd + 561.0*ue*u4 + 343.0*ug*u4 + 469.0*uq*u4 - 242.0*ur*u4
+			qd = qd - 205.0*u9*ui + 262.0*ud*ui + 208.0*ua*uj - 271.0*ue*uj
+			qd = qd - 382.0*ue*uk - 376.0*ud*ul
+			qd *= 0.0000001
+
+			vk = (0.077108 + (0.007186-0.001533*j1)*j1) * u5
+			vk -= 0.007075 * u9
+			vk += (0.045803 - (0.014766+0.000536*j1)*j1) * u6
+			vk = vk - 0.072586*u2 - 0.075825*u9*u1 - 0.024839*ub*u1
+			vk = vk - 0.008631*ud*u1 - 0.150383*ua*u2
+			vk = vk + 0.026897*uc*u2 + 0.010053*ue*u2
+			vk = vk - (0.013597+0.001719*j1)*u9*u3 + 0.011981*ub*u4
+			vk -= (0.007742 - 0.001517*j1) * ua * u3
+			vk += (0.013586 - 0.001375*j1) * uc * u3
+			vk -= (0.013667 - 0.001239*j1) * u9 * u4
+			vk += (0.014861 + 0.001136*j1) * ua * u4
+			vk -= (0.013064 + 0.001628*j1) * uc * u4
+			qe = qc - (pautil.DegreesToRadians(vk) / planet.Value4)
+
+			qf = 572.0*u5 - 1590.0*ub*u2 + 2933.0*u6 - 647.0*ud*u2
+			qf = qf + 33629.0*ua - 344.0*uf*u2 - 3081.0*uc + 2885.0*ua*u2
+			qf = qf - 1423.0*ue + (2172.0+102.0*j1)*uc*u2 - 671.0*ug
+			qf = qf + 296.0*ue*u2 - 320.0*vh - 267.0*ub*u3 + 1098.0*u1
+			qf = qf - 778.0*ua*u3 - 2812.0*u9*u1 + 495.0*uc*u3 + 688.0*ub*u1
+			qf = qf + 250.0*ue*u3 - 393.0*ud*u1 - 856.0*u9*u4 - 228.0*uf*u1
+			qf = qf + 441.0*ub*u4 + 2138.0*ua*u1 + 296.0*uc*u4 - 999.0*uc*u1
+			qf = qf + 211.0*ue*u4 - 642.0*ue*u1 - 427.0*u9*ui - 325.0*ug*u1
+			qf = qf + 398.0*ud*ui - 890.0*u2 + 344.0*ua*uj + 2206.0*u9*u2
+			qf -= 427.0 * ue * uj
+			qf *= 0.000001
+
+			qg = 0.000747*ua*u1 + 0.001069*ua*u2 + 0.002108*ub*u3
+			qg = qg + 0.001261*uc*u3 + 0.001236*ub*u4 - 0.002075*uc*u4
+			qg = pautil.DegreesToRadians(qg)
+
+			return patype.PlanetLongLatL4945{QA: qa, QB: qb, QC: qc, QD: qd, QE: qe, QF: qf, QG: qg}
+		}
+
+		qc = (0.331364 - (0.010281+0.004692*j1)*j1) * u5
+		qc += (0.003228 - (0.064436-0.002075*j1)*j1) * u6
+		qc -= (0.003083 + (0.000275-0.000489*j1)*j1) * u7
+		qc = qc + 0.002472*u8a + 0.013619*u9 + 0.018472*ub
+		qc = qc + 0.006717*ud + 0.002775*uf + 0.006417*ub*u1
+		qc = qc + (0.007275-0.001253*j1)*u9*u1 + 0.002439*ud*u1
+		qc = qc - (0.035681+0.001208*j1)*u9*u2 - 0.003767*uc*u1
+		qc = qc - (0.033839+0.001125*j1)*ua*u1 - 0.004261*ub*u2
+		qc = qc + (0.001161*j1-0.006333)*ua*u2 + 0.002178*u2
+		qc = qc - 0.006675*uc*u2 - 0.002664*ue*u2 - 0.002572*u9*u3
+		qc = qc - 0.003567*ub*u3 + 0.002094*ua*u4 + 0.003342*uc*u4
+		qc = pautil.DegreesToRadians(qc)
+
+		qd = (3606.0+(130.0-43.0*j1)*j1)*u5 + (1289.0-580.0*j1)*u6
+		qd = qd - 6764.0*u9*u1 - 1110.0*ub*u1 - 224.0*ud*u1 - 204.0*u1
+		qd = qd + (1284.0+116.0*j1)*ua*u1 + 188.0*uc*u1
+		qd = qd + (1460.0+130.0*j1)*u9*u2 + 224.0*ub*u2 - 817.0*u2
+		qd = qd + 6074.0*u2*ua + 992.0*uc*u2 + 508.0*ue*u2 + 230.0*ug*u2
+		qd = qd + 108.0*vh*u2 - (956.0+73.0*j1)*u9*u3 + 448.0*ub*u3
+		qd = qd + 137.0*ud*u3 + (108.0*j1-997.0)*ua*u3 + 480.0*uc*u3
+		qd = qd + 148.0*ue*u3 + (99.0*j1-956.0)*u9*u4 + 490.0*ub*u4
+		qd = qd + 158.0*ud*u4 + 179.0*u4 + (1024.0+75.0*j1)*ua*u4
+		qd = qd - 437.0*uc*u4 - 132.0*ue*u4
+		qd *= 0.0000001
+
+		vk = (0.007192-0.003147*j1)*u5 - 0.004344*u1
+		vk += (j1*(0.000197*j1-0.000675) - 0.020428) * u6
+		vk = vk + 0.034036*ua*u1 + (0.007269+0.000672*j1)*u9*u1
+		vk = vk + 0.005614*uc*u1 + 0.002964*ue*u1 + 0.037761*u9*u2
+		vk = vk + 0.006158*ub*u2 - 0.006603*ua*u2 - 0.005356*u9*u3
+		vk = vk + 0.002722*ub*u3 + 0.004483*ua*u3
+		vk = vk - 0.002642*uc*u3 + 0.004403*u9*u4
+		vk = vk - 0.002536*ub*u4 + 0.005547*ua*u4 - 0.002689*uc*u4
+		qe = qc - (pautil.DegreesToRadians(vk) / planet.Value4)
+
+		qf = 205.0*ua - 263.0*u6 + 693.0*uc + 312.0*ue + 147.0*ug + 299.0*u9*u1
+		qf = qf + 181.0*uc*u1 + 204.0*ub*u2 + 111.0*ud*u2 - 337.0*ua*u2
+		qf -= 111.0 * uc * u2
+		qf *= 0.000001
+
+		return patype.PlanetLongLatL4945{QA: qa, QB: qb, QC: qc, QD: qd, QE: qe, QF: qf, QG: qg}
+	}
+
+	if planet.Name == "Uranus" || planet.Name == "Neptune" {
+		var j8 float64 = Unwind(1.46205 + 3.81337*t)
+		var j9 float64 = 2.0*j8 - j4
+		var vj float64 = math.Sin(j9)
+		var uu float64 = math.Cos(j9)
+		var uv float64 = math.Sin(2.0 * j9)
+		var uw float64 = math.Cos(2.0 * j9)
+
+		if planet.Name == "Neptune" {
+			ja = j8 - j2
+			jb = j8 - j3
+			jc = j8 - j4
+			qc = (0.001089*j1 - 0.589833) * vj
+			qc = qc + (0.004658*j1-0.056094)*uu - 0.024286*uv
+			qc = pautil.DegreesToRadians(qc)
+
+			vk = 0.024039*vj - 0.025303*uu + 0.006206*uv
+			vk -= 0.005992 * uw
+			qe = qc - (pautil.DegreesToRadians(vk) / planet.Value4)
+
+			qd = 4389.0*vj + 1129.0*uv + 4262.0*uu + 1089.0*uw
+			qd *= 0.0000001
+
+			qf = 8189.0*uu - 817.0*vj + 781.0*uw
+			qf *= 0.000001
+
+			var vd float64 = math.Sin(2.0 * jc)
+			var ve float64 = math.Cos(2.0 * jc)
+			var vf float64 = math.Sin(j8)
+			var vg float64 = math.Cos(j8)
+			qa = -0.009556*math.Sin(ja) - 0.005178*math.Sin(jb)
+			qa = qa + 0.002572*vd - 0.002972*ve*vf - 0.002833*vd*vg
+
+			qg = 0.000336*ve*vf + 0.000364*vd*vg
+			qg = pautil.DegreesToRadians(qg)
+
+			qb = -40596.0 + 4992.0*math.Cos(ja) + 2744.0*math.Cos(jb)
+			qb = qb + 2044.0*math.Cos(jc) + 1051.0*ve
+			qb *= 0.000001
+
+			return patype.PlanetLongLatL4945{QA: qa, QB: qb, QC: qc, QD: qd, QE: qe, QF: qf, QG: qg}
+		}
+
+		ja = j4 - j2
+		jb = j4 - j3
+		jc = j8 - j4
+		qc = (0.864319 - 0.001583*j1) * vj
+		qc = qc + (0.082222-0.006833*j1)*uu + 0.036017*uv
+		qc = qc - 0.003019*uw + 0.008122*math.Sin(j6)
+		qc = pautil.DegreesToRadians(qc)
+
+		vk = 0.120303*vj + 0.006197*uv
+		vk += (0.019472 - 0.000947*j1) * uu
+		qe = qc - (pautil.DegreesToRadians(vk) / planet.Value4)
+
+		qd = (163.0*j1-3349.0)*vj + 20981.0*uu + 1311.0*uw
+		qd *= 0.0000001
+
+		qf = -0.003825 * uu
+
+		qa = (-0.038581 + (0.002031-0.00191*j1)*j1) * math.Cos(j4+jb)
+		qa += (0.010122 - 0.000988*j1) * math.Sin(j4+jb)
+		var a float64 = (0.034964 - (0.001038-0.000868*j1)*j1) * math.Cos(2.0*j4+jb)
+		qa = a + qa + 0.005594*math.Sin(j4+3.0*jc) - 0.014808*math.Sin(ja)
+		qa = qa - 0.005794*math.Sin(jb) + 0.002347*math.Cos(jb)
+		qa = qa + 0.009872*math.Sin(jc) + 0.008803*math.Sin(2.0*jc)
+		qa -= 0.004308 * math.Sin(3.0*jc)
+
+		var ux float64 = math.Sin(jb)
+		var uy float64 = math.Cos(jb)
+		var uz float64 = math.Sin(j4)
+		var va float64 = math.Cos(j4)
+		var vb float64 = math.Sin(2.0 * j4)
+		var vc float64 = math.Cos(2.0 * j4)
+		qg = (0.000458*ux - 0.000642*uy - 0.000517*math.Cos(4.0*jc)) * uz
+		qg -= (0.000347*ux + 0.000853*uy + 0.000517*math.Sin(4.0*jb)) * va
+		qg += 0.000403 * (math.Cos(2.0*jc)*vb + math.Sin(2.0*jc)*vc)
+		qg = pautil.DegreesToRadians(qg)
+
+		qb = -25948.0 + 4985.0*math.Cos(ja) - 1230.0*va + 3354.0*uy
+		qb = qb + 904.0*math.Cos(2.0*jc) + 894.0*(math.Cos(jc)-math.Cos(3.0*jc))
+		qb += (5795.0*va - 1165.0*uz + 1388.0*vc) * ux
+		qb += (1351.0*va + 5702.0*uz + 1388.0*vb) * uy
+		qb *= 0.000001
+
+		return patype.PlanetLongLatL4945{QA: qa, QB: qb, QC: qc, QD: qd, QE: qe, QF: qf, QG: qg}
+	}
+
+	return patype.PlanetLongLatL4945{QA: qa, QB: qb, QC: qc, QD: qd, QE: qe, QF: qf, QG: qg}
 }
