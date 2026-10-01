@@ -39,3 +39,14 @@ func TestPrecisePositionofPlanet(t *testing.T) {
 
 	require.Equal(t, expectedPrecisePositionOfPlanet, actualPrecisePositionOfPlanet, "Mismatch in Precise Position of Planet")
 }
+
+func TestVisualAspectsOfPlanet(t *testing.T) {
+	var expectedVisualAspectsOfPlanet patype.PlanetVisualAspects = patype.PlanetVisualAspects{
+		DistanceAu: 5.59829, AngDiaArcsec: 35.1, Phase: 0.99, LightTimeHour: 0, LightTimeMinutes: 46, LightTimeSeconds: 33.32,
+		PosAngleBrightLimbDeg: 113.2, ApproximateMagnitude: -2.0,
+	}
+
+	var actualVisualAspectsOfPlanet patype.PlanetVisualAspects = palib.VisualAspectsOfAPlanet(0, 0, 0, false, 0, 22, 11, 2003, "Jupiter")
+
+	require.Equal(t, expectedVisualAspectsOfPlanet, actualVisualAspectsOfPlanet, "Mismatch in Visual Aspects of Planet")
+}

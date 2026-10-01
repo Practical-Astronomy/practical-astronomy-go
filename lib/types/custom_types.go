@@ -276,3 +276,14 @@ type PlanetLongLatL4945 struct {
 	QF float64
 	QG float64
 }
+
+type PlanetVisualAspects struct {
+	DistanceAu            float64
+	AngDiaArcsec          float64
+	Phase                 float64
+	LightTimeHour         float64
+	LightTimeMinutes      float64
+	LightTimeSeconds      float64
+	PosAngleBrightLimbDeg float64
+	ApproximateMagnitude  float64
+}
