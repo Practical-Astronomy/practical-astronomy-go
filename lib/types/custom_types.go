@@ -295,3 +295,19 @@ type EllipticalCometPosition struct {
 	DecMin    float64
 	DistEarth float64
 }
+
+type ParabolicCometPosition struct {
+	RaHour    float64
+	RaMin     float64
+	RaSec     float64
+	DecDeg    float64
+	DecMin    float64
+	DecSec    float64
+	DistEarth float64
+}
+
+type CometLongLatDist struct {
+	LongDeg float64
+	LatDeg  float64
+	DistAu  float64
+}
