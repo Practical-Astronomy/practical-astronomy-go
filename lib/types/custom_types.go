@@ -316,3 +316,12 @@ type BinaryStarOrbitalData struct {
 	PositionAngleDeg float64
 	SeparationArcsec float64
 }
+
+type MoonApproximatePosition struct {
+	RaHour float64
+	RaMin  float64
+	RaSec  float64
+	DecDeg float64
+	DecMin float64
+	DecSec float64
+}
