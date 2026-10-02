@@ -3234,3 +3234,71 @@ func MoonLongLatHp(lh float64, lm float64, ls float64, ds int, zc int, dy float6
 
 	return patype.MoonLongLatHP{LongDeg: moon_long_deg, LatDeg: moon_lat_deg, HorPara: moon_hor_para}
 }
+
+/*
+Calculate current phase of Moon.
+
+Original macro name: MoonPhase
+*/
+func MoonPhase(lh float64, lm float64, ls float64, ds int, zc int, dy float64, mn int, yr int) float64 {
+	var moonResult patype.MoonLongLatHP = MoonLongLatHp(lh, lm, ls, ds, zc, dy, mn, yr)
+
+	var cd float64 = math.Cos(pautil.DegreesToRadians(moonResult.LongDeg-SunLong(lh, lm, ls, ds, zc, dy, mn, yr))) *
+		math.Cos(pautil.DegreesToRadians(moonResult.LatDeg))
+	var d float64 = math.Acos(cd)
+	var sd float64 = math.Sin(d)
+	var i float64 = 0.1468 * sd * (1.0 - 0.0549*math.Sin(MoonMeanAnomaly(lh, lm, ls, ds, zc, dy, mn, yr)))
+	i /= (1.0 - 0.0167*math.Sin(SunMeanAnomaly(lh, lm, ls, ds, zc, dy, mn, yr)))
+	i = 3.141592654 - d - pautil.DegreesToRadians(i)
+	var k float64 = (1.0 + math.Cos(i)) / 2.0
+
+	return pautil.RoundTo(k, 2)
+}
+
+/*
+Calculate the Moon's mean anomaly.
+
+Original macro name: MoonMeanAnomaly
+*/
+func MoonMeanAnomaly(lh float64, lm float64, ls float64, ds int, zc int, dy float64, mn int, yr int) float64 {
+	var ut float64 = LocalCivilTimeToUniversalTime(lh, lm, ls, ds, zc, dy, mn, yr)
+	var gd float64 = LocalCivilTimeGreenwichDay(lh, lm, ls, ds, zc, dy, mn, yr)
+	var gm int = int(LocalCivilTimeGreenwichMonth(lh, lm, ls, ds, zc, dy, mn, yr))
+	var gy int = int(LocalCivilTimeGreenwichYear(lh, lm, ls, ds, zc, dy, mn, yr))
+	var t float64 = ((CivilDateToJulianDate(gd, float64(gm), float64(gy)) - 2415020.0) / 36525.0) + (ut / 876600.0)
+	var t2 float64 = t * t
+
+	var m1 float64 = 27.32158213
+	var m2 float64 = 365.2596407
+	var m3 float64 = 27.55455094
+	var m4 float64 = 29.53058868
+	var m5 float64 = 27.21222039
+	var m6 float64 = 6798.363307
+	var q float64 = CivilDateToJulianDate(gd, float64(gm), float64(gy)) - 2415020.0 + (ut / 24.0)
+	m1 = q / m1
+	m2 = q / m2
+	m3 = q / m3
+	m4 = q / m4
+	m5 = q / m5
+	m6 = q / m6
+	m1 = 360.0 * (m1 - math.Floor(m1))
+	m2 = 360.0 * (m2 - math.Floor(m2))
+	m3 = 360.0 * (m3 - math.Floor(m3))
+	m4 = 360.0 * (m4 - math.Floor(m4))
+	m5 = 360.0 * (m5 - math.Floor(m5))
+	m6 = 360.0 * (m6 - math.Floor(m6))
+
+	// var ml float64 = 270.434164 + m1 - (0.001133-0.0000019*t)*t2 // not used
+	// var ms float64 = 358.475833 + m2 - (0.00015+0.0000033*t)*t2  // not used
+	var md float64 = 296.104608 + m3 + (0.009192+0.0000144*t)*t2
+	var na float64 = 259.183275 - m6 + (0.002078+0.0000022*t)*t2
+	var a float64 = pautil.DegreesToRadians(51.2 + 20.2*t)
+	var s1 float64 = math.Sin(a)
+	var s2 float64 = math.Sin(pautil.DegreesToRadians(na))
+	var b float64 = 346.56 + (132.87-0.0091731*t)*t
+	var s3 float64 = 0.003964 * math.Sin(pautil.DegreesToRadians(b))
+	// var c float64 = pautil.DegreesToRadians(na + 275.05 - 2.3*t) // not used
+	md = md + 0.000817*s1 + s3 + 0.002541*s2
+
+	return pautil.DegreesToRadians(md)
+}

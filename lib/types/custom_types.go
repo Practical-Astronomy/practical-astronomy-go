@@ -342,3 +342,8 @@ type MoonLongLatHP struct {
 	LatDeg  float64
 	HorPara float64
 }
+
+type MoonPhase struct {
+	Phase         float64
+	BrightLimbDeg float64
+}

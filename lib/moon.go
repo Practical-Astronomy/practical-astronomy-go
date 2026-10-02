@@ -117,3 +117,52 @@ func PrecisePositionOfMoon(
 		EarthMoonDistKm: earthMoonDistKm, HorParallaxDeg: moonHorParallaxDeg,
 	}
 }
+
+/* Calculate Moon phase and position angle of bright limb. */
+func MoonPhase(
+	lctHour float64, lctMin float64, lctSec float64, isDaylightSaving bool, zoneCorrectionHours int,
+	localDateDay float64, localDateMonth int, localDateYear int, accuracyLevel patype.AccuracyLevel,
+) patype.MoonPhase {
+	var daylightSaving int
+	if isDaylightSaving {
+		daylightSaving = 1
+	} else {
+		daylightSaving = 0
+	}
+
+	var gdateDay float64 = pamacro.LocalCivilTimeGreenwichDay(
+		lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear)
+	var gdateMonth int = int(pamacro.LocalCivilTimeGreenwichMonth(
+		lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear))
+	var gdateYear int = int(pamacro.LocalCivilTimeGreenwichYear(
+		lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear))
+
+	var sunLongDeg float64 = pamacro.SunLong(lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear)
+	var moonResult patype.MoonLongLatHP = pamacro.MoonLongLatHp(
+		lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear)
+	var dRad float64 = pautil.DegreesToRadians(moonResult.LongDeg - sunLongDeg)
+
+	var moonPhase1 float64
+	if accuracyLevel == patype.AccuracyLevel_Precise {
+		moonPhase1 = pamacro.MoonPhase(lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear)
+	} else {
+		moonPhase1 = (1.0 - math.Cos(dRad)) / 2.0
+	}
+
+	var sunRaRad float64 = pautil.DegreesToRadians(pamacro.EclipticRightAscension(sunLongDeg, 0, 0, 0, 0, 0, gdateDay, gdateMonth, gdateYear))
+	var moonRaRad float64 = pautil.DegreesToRadians(pamacro.EclipticRightAscension(
+		moonResult.LongDeg, 0, 0, moonResult.LatDeg, 0, 0, gdateDay, gdateMonth, gdateYear))
+	var sunDecRad float64 = pautil.DegreesToRadians(pamacro.EclipticDeclination(sunLongDeg, 0, 0, 0, 0, 0, gdateDay, gdateMonth, gdateYear))
+	var moonDecRad float64 = pautil.DegreesToRadians(pamacro.EclipticDeclination(
+		moonResult.LongDeg, 0, 0, moonResult.LatDeg, 0, 0, gdateDay, gdateMonth, gdateYear))
+
+	var y float64 = math.Cos(sunDecRad) * math.Sin(sunRaRad-moonRaRad)
+	var x float64 = math.Cos(moonDecRad)*math.Sin(sunDecRad) - math.Sin(moonDecRad)*math.Cos(sunDecRad)*math.Cos(sunRaRad-moonRaRad)
+
+	var chiDeg float64 = pamacro.Degrees(math.Atan2(y, x))
+
+	var moonPhase float64 = pautil.RoundTo(moonPhase1, 2)
+	var brightLimbDeg float64 = pautil.RoundTo(chiDeg, 2)
+
+	return patype.MoonPhase{Phase: moonPhase, BrightLimbDeg: brightLimbDeg}
+}
