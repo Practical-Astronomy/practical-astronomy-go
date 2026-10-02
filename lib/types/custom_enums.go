@@ -47,3 +47,10 @@ const (
 	CoordinateType_Actual CoordinateType = iota
 	CoordinateType_Apparent
 )
+
+type AccuracyLevel int
+
+const (
+	AccuracyLevel_Approximate AccuracyLevel = iota
+	AccuracyLevel_Precise
+)

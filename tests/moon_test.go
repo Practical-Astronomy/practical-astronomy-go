@@ -23,3 +23,10 @@ func TestPrecisePositionOfMoon(t *testing.T) {
 
 	require.Equal(t, expectedMoonPosition, actualMoonPosition, "Mismatched Precise Position of Moon")
 }
+
+func TestMoonPhase(t *testing.T) {
+	var expectedMoonPhase patype.MoonPhase = patype.MoonPhase{Phase: 0.22, BrightLimbDeg: -71.58}
+	var actualMoonPhase patype.MoonPhase = palib.MoonPhase(0, 0, 0, false, 0, 1, 9, 2003, patype.AccuracyLevel_Approximate)
+
+	require.Equal(t, expectedMoonPhase, actualMoonPhase, "Mismatched Moon Phase")
+}
