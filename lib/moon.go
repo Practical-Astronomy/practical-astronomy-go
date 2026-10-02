@@ -202,3 +202,30 @@ func TimesOfNewMoonAndFullMoon(
 		FullLocalDateDay: fmLocalDateDay, FullLocalDateMonth: fmLocalDateMonth, FullLocalDateYear: fmLocalDateYear,
 	}
 }
+
+/* Calculate Moon's distance, angular diameter, and horizontal parallax. */
+func MoonDistAngDiamHorParallax(
+	lctHour float64, lctMin float64, lctSec float64, isDaylightSaving bool, zoneCorrectionHours int,
+	localDateDay float64, localDateMonth int, localDateYear int,
+) patype.MoonDistDiameterHorParallax {
+	var daylightSaving int = pautil.BoolToInt(isDaylightSaving)
+
+	var moonDistance float64 = pamacro.MoonDist(
+		lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear)
+	var moonAngularDiameter float64 = pamacro.MoonSize(
+		lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear)
+	var moonHorizontalParallax float64 = pamacro.MoonHorizontalParallax(
+		lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear)
+
+	var earthMoonDist float64 = pautil.RoundTo(moonDistance, 0)
+	var angDiameterDeg float64 = pamacro.DecimalDegreesDegrees(moonAngularDiameter + 0.008333)
+	var angDiameterMin float64 = pamacro.DecimalDegreesMinutes(moonAngularDiameter + 0.008333)
+	var horParallaxDeg float64 = pamacro.DecimalDegreesDegrees(moonHorizontalParallax)
+	var horParallaxMin float64 = pamacro.DecimalDegreesMinutes(moonHorizontalParallax)
+	var horParallaxSec float64 = pamacro.DecimalDegreesSeconds(moonHorizontalParallax)
+
+	return patype.MoonDistDiameterHorParallax{
+		EarthMoonDist: earthMoonDist, AngDiameterDeg: angDiameterDeg, AngDiameterMin: angDiameterMin,
+		HorParallaxDeg: horParallaxDeg, HorParallaxMin: horParallaxMin, HorParallaxSec: horParallaxSec,
+	}
+}

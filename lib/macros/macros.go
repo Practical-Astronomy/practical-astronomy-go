@@ -1380,6 +1380,31 @@ func MoonLatitude(lh float64, lm float64, ls float64, ds int, zc int, dy float64
 }
 
 /*
+Calculate distance from the Earth to the Moon (km)
+
+Original macro name: MoonDist
+*/
+func MoonDist(lh float64, lm float64, ls float64, ds int, zc int, dy float64, mn int, yr int) float64 {
+	var hp float64 = pautil.DegreesToRadians(MoonHorizontalParallax(lh, lm, ls, ds, zc, dy, mn, yr))
+	var r float64 = 6378.14 / math.Sin(hp)
+
+	return r
+}
+
+/*
+Calculate the Moon's angular diameter (degrees)
+
+Original macro name: MoonSize
+*/
+func MoonSize(lh float64, lm float64, ls float64, ds int, zc int, dy float64, mn int, yr int) float64 {
+	var hp float64 = pautil.DegreesToRadians(MoonHorizontalParallax(lh, lm, ls, ds, zc, dy, mn, yr))
+	var r float64 = 6378.14 / math.Sin(hp)
+	var th float64 = 384401.0 * 0.5181 / r
+
+	return th
+}
+
+/*
 Calculate horizontal parallax for the Moon
 
 Original macro name: MoonHP

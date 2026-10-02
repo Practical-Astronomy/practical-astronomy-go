@@ -366,3 +366,12 @@ type NewMoonFullMoonL6855 struct {
 	B float64
 	F float64
 }
+
+type MoonDistDiameterHorParallax struct {
+	EarthMoonDist  float64
+	AngDiameterDeg float64
+	AngDiameterMin float64
+	HorParallaxDeg float64
+	HorParallaxMin float64
+	HorParallaxSec float64
+}
