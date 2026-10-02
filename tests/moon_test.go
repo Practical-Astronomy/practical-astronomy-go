@@ -15,3 +15,11 @@ func TestApproximatePositionOfMoon(t *testing.T) {
 
 	require.Equal(t, expectedMoonPosition, actualMoonPosition, "Mismatched Approximate Position of Moon")
 }
+
+func TestPrecisePositionOfMoon(t *testing.T) {
+	var expectedMoonPosition patype.MoonPrecisePosition = patype.MoonPrecisePosition{
+		RaHour: 14, RaMin: 12, RaSec: 10.21, DecDeg: -11, DecMin: 34, DecSec: 57.83, EarthMoonDistKm: 367964, HorParallaxDeg: 0.993191}
+	var actualMoonPosition patype.MoonPrecisePosition = palib.PrecisePositionOfMoon(0, 0, 0, false, 0, 1, 9, 2003)
+
+	require.Equal(t, expectedMoonPosition, actualMoonPosition, "Mismatched Precise Position of Moon")
+}

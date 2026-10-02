@@ -325,3 +325,20 @@ type MoonApproximatePosition struct {
 	DecMin float64
 	DecSec float64
 }
+
+type MoonPrecisePosition struct {
+	RaHour          float64
+	RaMin           float64
+	RaSec           float64
+	DecDeg          float64
+	DecMin          float64
+	DecSec          float64
+	EarthMoonDistKm float64
+	HorParallaxDeg  float64
+}
+
+type MoonLongLatHP struct {
+	LongDeg float64
+	LatDeg  float64
+	HorPara float64
+}

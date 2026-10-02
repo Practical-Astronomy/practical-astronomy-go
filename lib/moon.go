@@ -72,3 +72,48 @@ func ApproximatePositionOfMoon(
 		DecDeg: moonDecDeg, DecMin: moonDecMin, DecSec: moonDecSec,
 	}
 }
+
+/* Calculate precise position of the Moon. */
+func PrecisePositionOfMoon(
+	lctHour float64, lctMin float64, lctSec float64, isDaylightSaving bool, zoneCorrectionHours int,
+	localDateDay float64, localDateMonth int, localDateYear int,
+) patype.MoonPrecisePosition {
+	var daylightSaving int
+	if isDaylightSaving {
+		daylightSaving = 1
+	} else {
+		daylightSaving = 0
+	}
+
+	var gdateDay float64 = pamacro.LocalCivilTimeGreenwichDay(
+		lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear)
+	var gdateMonth int = int(pamacro.LocalCivilTimeGreenwichMonth(
+		lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear))
+	var gdateYear int = int(pamacro.LocalCivilTimeGreenwichYear(
+		lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear))
+
+	var moonResult patype.MoonLongLatHP = pamacro.MoonLongLatHp(
+		lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear)
+
+	var nutationInLongitudeDeg float64 = pamacro.NutatLong(gdateDay, gdateMonth, gdateYear)
+	var correctedLongDeg float64 = moonResult.LongDeg + nutationInLongitudeDeg
+	var earthMoonDistanceKm float64 = 6378.14 / math.Sin(pautil.DegreesToRadians(moonResult.HorPara))
+	var moonRaHours1 float64 = pamacro.DecimalDegreesToDegreeHours(
+		pamacro.EclipticRightAscension(correctedLongDeg, 0, 0, moonResult.LatDeg, 0, 0, gdateDay, gdateMonth, gdateYear))
+	var moonDecDeg1 float64 = pamacro.EclipticDeclination(correctedLongDeg, 0, 0, moonResult.LatDeg, 0, 0, gdateDay, gdateMonth, gdateYear)
+
+	var moonRaHour int = pamacro.DecimalHoursHour(moonRaHours1)
+	var moonRaMin int = pamacro.DecimalHoursMinute(moonRaHours1)
+	var moonRaSec float64 = pamacro.DecimalHoursSecond(moonRaHours1)
+	var moonDecDeg float64 = pamacro.DecimalDegreesDegrees(moonDecDeg1)
+	var moonDecMin float64 = pamacro.DecimalDegreesMinutes(moonDecDeg1)
+	var moonDecSec float64 = pamacro.DecimalDegreesSeconds(moonDecDeg1)
+	var earthMoonDistKm float64 = pautil.RoundTo(earthMoonDistanceKm, 0)
+	var moonHorParallaxDeg float64 = pautil.RoundTo(moonResult.HorPara, 6)
+
+	return patype.MoonPrecisePosition{
+		RaHour: float64(moonRaHour), RaMin: float64(moonRaMin), RaSec: moonRaSec,
+		DecDeg: moonDecDeg, DecMin: moonDecMin, DecSec: moonDecSec,
+		EarthMoonDistKm: earthMoonDistKm, HorParallaxDeg: moonHorParallaxDeg,
+	}
+}
