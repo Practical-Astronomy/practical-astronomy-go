@@ -313,6 +313,59 @@ func UniversalTimeToLocalCivilTime(uHours float64, uMinutes float64, uSeconds fl
 }
 
 /*
+Get Local Civil Day for Universal Time
+
+Original macro name: UTLcDay
+*/
+func UniversalTimeLocalCivilDay(
+	uHours float64, uMinutes float64, uSeconds float64, daylightSaving int, zoneCorrection int,
+	greenwichDay float64, greenwichMonth int, greenwichYear int,
+) float64 {
+	var a float64 = HmsDh(uHours, uMinutes, uSeconds)
+	var b float64 = a + float64(zoneCorrection)
+	var c float64 = b + float64(daylightSaving)
+	var d float64 = CivilDateToJulianDate(greenwichDay, float64(greenwichMonth), float64(greenwichYear)) + (c / 24.0)
+	var e float64 = JulianDateDay(d)
+	var e1 float64 = math.Floor(e)
+
+	return e1
+}
+
+/*
+Get Local Civil Month for Universal Time
+
+Original macro name: UTLcMonth
+*/
+func UniversalTimeLocalCivilMonth(
+	uHours float64, uMinutes float64, uSeconds float64, daylightSaving int, zoneCorrection int,
+	greenwichDay float64, greenwichMonth int, greenwichYear int,
+) int {
+	var a float64 = HmsDh(uHours, uMinutes, uSeconds)
+	var b float64 = a + float64(zoneCorrection)
+	var c float64 = b + float64(daylightSaving)
+	var d float64 = CivilDateToJulianDate(greenwichDay, float64(greenwichMonth), float64(greenwichYear)) + (c / 24.0)
+
+	return JulianDateMonth(d)
+}
+
+/*
+Get Local Civil Year for Universal Time
+
+Original macro name: UTLcYear
+*/
+func UniversalTimeLocalCivilYear(
+	uHours float64, uMinutes float64, uSeconds float64, daylightSaving int, zoneCorrection int,
+	greenwichDay float64, greenwichMonth int, greenwichYear int,
+) int {
+	var a float64 = HmsDh(uHours, uMinutes, uSeconds)
+	var b float64 = a + float64(zoneCorrection)
+	var c float64 = b + float64(daylightSaving)
+	var d float64 = CivilDateToJulianDate(greenwichDay, float64(greenwichMonth), float64(greenwichYear)) + (c / 24.0)
+
+	return JulianDateYear(d)
+}
+
+/*
 Determine Greenwich Day for Local Time
 
 Original macro name: LctGDay
@@ -3301,4 +3354,124 @@ func MoonMeanAnomaly(lh float64, lm float64, ls float64, ds int, zc int, dy floa
 	md = md + 0.000817*s1 + s3 + 0.002541*s2
 
 	return pautil.DegreesToRadians(md)
+}
+
+/*
+Calculate Julian date of New Moon.
+
+Original macro name: NewMoon
+*/
+func NewMoon(ds int, zc int, dy float64, mn int, yr int) float64 {
+	var d0 float64 = LocalCivilTimeGreenwichDay(12.0, 0.0, 0.0, ds, zc, dy, mn, yr)
+	var m0 int = int(LocalCivilTimeGreenwichMonth(12.0, 0.0, 0.0, ds, zc, dy, mn, yr))
+	var y0 int = int(LocalCivilTimeGreenwichYear(12.0, 0.0, 0.0, ds, zc, dy, mn, yr))
+
+	var j0 float64 = CivilDateToJulianDate(0.0, 1, float64(y0)) - 2415020.0
+	var dj float64 = CivilDateToJulianDate(d0, float64(m0), float64(y0)) - 2415020.0
+	var k float64 = Lint(((float64(y0) - 1900.0 + ((dj - j0) / 365.0)) * 12.3685) + 0.5)
+	var tn float64 = k / 1236.85
+	var tf float64 = (k + 0.5) / 1236.85
+	var t float64 = tn
+	var nmfmResult1 patype.NewMoonFullMoonL6855 = NewMoonFullMoonL6855(k, t)
+	var ni float64 = nmfmResult1.A
+	var nf float64 = nmfmResult1.B
+	t = tf
+	k += 0.5
+	// var nmfmResult2 patype.NewMoonFullMoonL6855 = NewMoonFullMoonL6855(k, t) // unused
+
+	return ni + 2415020.0 + nf
+}
+
+/*
+Calculate Julian date of Full Moon.
+
+Original macro name: FullMoon
+*/
+func FullMoon(ds int, zc int, dy float64, mn int, yr int) float64 {
+	var d0 float64 = LocalCivilTimeGreenwichDay(12.0, 0.0, 0.0, ds, zc, dy, mn, yr)
+	var m0 int = int(LocalCivilTimeGreenwichMonth(12.0, 0.0, 0.0, ds, zc, dy, mn, yr))
+	var y0 int = int(LocalCivilTimeGreenwichYear(12.0, 0.0, 0.0, ds, zc, dy, mn, yr))
+
+	var j0 float64 = CivilDateToJulianDate(0.0, 1, float64(y0)) - 2415020.0
+	var dj float64 = CivilDateToJulianDate(d0, float64(m0), float64(y0)) - 2415020.0
+	var k float64 = Lint(((float64(y0) - 1900.0 + ((dj - j0) / 365.0)) * 12.3685) + 0.5)
+	var tn float64 = k / 1236.85
+	var tf float64 = (k + 0.5) / 1236.85
+	var t float64 = tn
+	// var nmfmResult1 patype.NewMoonFullMoonL6855 = NewMoonFullMoonL6855(k, t) // not used
+	t = tf
+	k += 0.5
+	var nmfmResult2 patype.NewMoonFullMoonL6855 = NewMoonFullMoonL6855(k, t)
+	var fi float64 = nmfmResult2.A
+	var ff float64 = nmfmResult2.B
+
+	return fi + 2415020.0 + ff
+}
+
+/**
+ * Helper function for new_moon() and full_moon() """
+ */
+func NewMoonFullMoonL6855(k float64, t float64) patype.NewMoonFullMoonL6855 {
+	var t2 float64 = t * t
+	var e float64 = 29.53 * k
+	var c float64 = 166.56 + (132.87-0.009173*t)*t
+	c = pautil.DegreesToRadians(c)
+	var b float64 = 0.00058868*k + (0.0001178-0.000000155*t)*t2
+	b = b + 0.00033*math.Sin(c) + 0.75933
+	var a float64 = k / 12.36886
+	var a1 float64 = 359.2242 + 360.0*Fract(a) - (0.0000333+0.00000347*t)*t2
+	var a2 float64 = 306.0253 + 360.0*Fract(k/0.9330851)
+	a2 += (0.0107306 + 0.00001236*t) * t2
+	a = k / 0.9214926
+	var f float64 = 21.2964 + 360.0*Fract(a) - (0.0016528+0.00000239*t)*t2
+	a1 = UnwindDeg(a1)
+	a2 = UnwindDeg(a2)
+	f = UnwindDeg(f)
+	a1 = pautil.DegreesToRadians(a1)
+	a2 = pautil.DegreesToRadians(a2)
+	f = pautil.DegreesToRadians(f)
+
+	var dd float64 = (0.1734-0.000393*t)*math.Sin(a1) + 0.0021*math.Sin(2.0*a1)
+	dd = dd - 0.4068*math.Sin(a2) + 0.0161*math.Sin(2.0*a2) - 0.0004*math.Sin(3.0*a2)
+	dd = dd + 0.0104*math.Sin(2.0*f) - 0.0051*math.Sin(a1+a2)
+	dd = dd - 0.0074*math.Sin(a1-a2) + 0.0004*math.Sin(2.0*f+a1)
+	dd = dd - 0.0004*math.Sin(2.0*f-a1) - 0.0006*math.Sin(2.0*f+a2) + 0.001*math.Sin(2.0*f-a2)
+	dd += 0.0005 * math.Sin(a1+2.0*a2)
+	var e1 float64 = math.Floor(e)
+	b = b + dd + (e - e1)
+	var b1 float64 = math.Floor(b)
+	a = e1 + b1
+	b -= b1
+
+	return patype.NewMoonFullMoonL6855{A: a, B: b, F: f}
+}
+
+/* Original macro name: FRACT */
+func Fract(w float64) float64 {
+	return w - Lint(w)
+}
+
+/* Original macro name: LINT */
+func Lint(w float64) float64 {
+	return IInt(w) + IInt(((1.0*Sign(w))-1.0)/2.0)
+}
+
+/* Original macro name: IINT */
+func IInt(w float64) float64 {
+	return Sign(w) * math.Floor(math.Abs(w))
+}
+
+/* Calculate sign of number. */
+func Sign(numberToCheck float64) float64 {
+	var signValue float64 = 0.0
+
+	if numberToCheck < 0.0 {
+		signValue = -1.0
+	}
+
+	if numberToCheck > 0.0 {
+		signValue = 1.0
+	}
+
+	return signValue
 }

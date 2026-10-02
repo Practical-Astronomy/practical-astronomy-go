@@ -347,3 +347,22 @@ type MoonPhase struct {
 	Phase         float64
 	BrightLimbDeg float64
 }
+
+type MoonNewFull struct {
+	NewLocalTimeHour   float64
+	NewLocalTimeMin    float64
+	NewLocalDateDay    float64
+	NewLocalDateMonth  int
+	NewLocalDateYear   int
+	FullLocalTimeHour  float64
+	FullLocalTimeMin   float64
+	FullLocalDateDay   float64
+	FullLocalDateMonth int
+	FullLocalDateYear  int
+}
+
+type NewMoonFullMoonL6855 struct {
+	A float64
+	B float64
+	F float64
+}
