@@ -40,3 +40,11 @@ func TestNewMoonFullMoon(t *testing.T) {
 
 	require.Equal(t, expectedNewMoonFullMoon, actualNewMoonFullMoon, "Mismatched New Moon/Full Moon")
 }
+
+func TestMoonDistAngDiamHorParallax(t *testing.T) {
+	var expectedMoonDist patype.MoonDistDiameterHorParallax = patype.MoonDistDiameterHorParallax{
+		EarthMoonDist: 367964, AngDiameterDeg: 0, AngDiameterMin: 32, HorParallaxDeg: 0, HorParallaxMin: 59, HorParallaxSec: 35.49}
+	var actualMoonDist patype.MoonDistDiameterHorParallax = palib.MoonDistAngDiamHorParallax(0, 0, 0, false, 0, 1, 9, 2003)
+
+	require.Equal(t, expectedMoonDist, actualMoonDist, "Mismatched Moon Distance/Angular Diameter/Horizontal Parallax")
+}
