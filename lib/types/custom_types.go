@@ -311,3 +311,8 @@ type CometLongLatDist struct {
 	LatDeg  float64
 	DistAu  float64
 }
+
+type BinaryStarOrbitalData struct {
+	PositionAngleDeg float64
+	SeparationArcsec float64
+}
