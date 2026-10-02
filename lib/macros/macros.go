@@ -2986,3 +2986,105 @@ func PlanetLongL4945(t float64, planet padata.PlanetDataPrecise) patype.PlanetLo
 
 	return patype.PlanetLongLatL4945{QA: qa, QB: qb, QC: qc, QD: qd, QE: qe, QF: qf, QG: qg}
 }
+
+/*
+Calculate longitude, latitude, and distance of parabolic-orbit comet.
+
+	Original macro names: PcometLong, PcometLat, PcometDist
+*/
+func PCometLongLatDist(lh float64, /* Local civil time, hour part. */
+	lm float64, /* Local civil time, minutes part. */
+	ls float64, /* Local civil time, seconds part. */
+	ds int, /* Daylight Savings offset. */
+	zc int, /* Time zone correction, in hours. */
+	dy float64, /* Local date, day part. */
+	mn int, /* Local date, month part. */
+	yr int, /* Local date, year part. */
+	td float64, /* Perihelion epoch (day) */
+	tm int, /* Perihelion epoch (month) */
+	ty int, /* Perihelion epoch (year) */
+	q float64, /* a (AU) */
+	i float64, /* Inclination (degrees) */
+	p float64, /* Perihelion (degrees) */
+	n float64, /* Node (degrees) */
+) patype.CometLongLatDist {
+	var gd float64 = LocalCivilTimeGreenwichDay(lh, lm, ls, ds, zc, dy, mn, yr)
+	var gm int = int(LocalCivilTimeGreenwichMonth(lh, lm, ls, ds, zc, dy, mn, yr))
+	var gy int = int(LocalCivilTimeGreenwichYear(lh, lm, ls, ds, zc, dy, mn, yr))
+	var ut float64 = LocalCivilTimeToUniversalTime(lh, lm, ls, ds, zc, dy, mn, yr)
+	var tpe float64 = (ut / 365.242191) + CivilDateToJulianDate(gd, float64(gm), float64(gy)) - CivilDateToJulianDate(td, float64(tm), float64(ty))
+	var lg float64 = pautil.DegreesToRadians(SunLong(lh, lm, ls, ds, zc, dy, mn, yr) + 180.0)
+	var re float64 = SunDist(lh, lm, ls, ds, zc, dy, mn, yr)
+
+	var rh2 float64 = 0.0
+	var rd float64 = 0.0
+	var s3 float64 = 0.0
+	var c3 float64 = 0.0
+	var lc float64 = 0.0
+	var s2 float64 = 0.0
+	var c2 float64 = 0.0
+
+	for k := 1; k < 3; k++ {
+		var s float64 = SolveCubic(0.0364911624 * tpe / (q * math.Sqrt(q)))
+		var nu float64 = 2.0 * math.Atan(s)
+		var r float64 = q * (1.0 + s*s)
+		var l float64 = nu + pautil.DegreesToRadians(p)
+		var s1 float64 = math.Sin(l)
+		var c1 float64 = math.Cos(l)
+		var i1 float64 = pautil.DegreesToRadians(i)
+		s2 = s1 * math.Sin(i1)
+		var ps float64 = math.Asin(s2)
+		var y float64 = s1 * math.Cos(i1)
+		lc = math.Atan2(y, c1) + pautil.DegreesToRadians(n)
+		c2 = math.Cos(ps)
+		rd = r * c2
+		var ll float64 = lc - lg
+		c3 = math.Cos(ll)
+		s3 = math.Sin(ll)
+		// var rh float64 = math.Sqrt((re * re) + (r * r) - (2.0 * re * rd * c3 * math.Cos(ps)))  // not used?
+		if k == 1 {
+			rh2 = math.Sqrt((re * re) + (r * r) - (2.0 * re * r * math.Cos(ps) * math.Cos(l+pautil.DegreesToRadians(n)-lg)))
+		}
+	}
+
+	var ep float64
+
+	if rd < re {
+		ep = math.Atan(-rd*s3/(re-(rd*c3))) + lg + 3.141592654
+	} else {
+		ep = math.Atan(re*s3/(rd-(re*c3))) + lc
+	}
+
+	ep = Unwind(ep)
+
+	var tb float64 = rd * s2 * math.Sin(ep-lc) / (c2 * re * s3)
+	var bp float64 = math.Atan(tb)
+
+	var comet_long_deg float64 = Degrees(ep)
+	var comet_lat_deg float64 = Degrees(bp)
+	var comet_dist_au float64 = rh2
+
+	return patype.CometLongLatDist{LongDeg: comet_long_deg, LatDeg: comet_lat_deg, DistAu: comet_dist_au}
+}
+
+/*
+For W, in radians, return S, also in radians.
+
+Original macro name: SolveCubic
+*/
+func SolveCubic(w float64) float64 {
+	var s float64 = w / 3.0
+
+	for 1 == 1 {
+		var s2 float64 = s * s
+		var d float64 = (s2+3.0)*s - w
+
+		if math.Abs(d) < 0.000001 {
+			return s
+		}
+
+		s = ((2.0 * s * s2) + w) / (3.0 * (s2 + 1.0))
+	}
+
+	return 0
+}

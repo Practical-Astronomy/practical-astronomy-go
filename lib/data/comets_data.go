@@ -11,6 +11,17 @@ type CometDataElliptical struct {
 	Incl_InclinationOfOrbit       float64 /* Inclination of the orbit */
 }
 
+type CometDataParabolic struct {
+	Name           string  /* Name of the comet  */
+	EpochPeriDay   float64 /* Epoch perihelion day */
+	EpochPeriMonth int     /* Epoch perihelion month */
+	EpochPeriYear  int     /* Epoch perihelion year */
+	ArgPeri        float64 /* Arg perihelion */
+	Node           float64 /* Comet's node */
+	PeriDist       float64 /* Distance at the perihelion */
+	Incl           float64 /* Inclination */
+}
+
 func GetCometDataElliptical(cometName string) CometDataElliptical {
 	var cometRecords = []CometDataElliptical{
 		{
@@ -85,4 +96,21 @@ func GetCometDataElliptical(cometName string) CometDataElliptical {
 		Name: "NOTFOUND", Epoch_EpochOfPerihelion: -99, Peri_LongitudeOfPerihelion: -99, Node_LongitudeOfAscendingNode: -99,
 		Period_PeriodOfOrbit: -99, Axis_SemiMajorAxisOfOrbit: -99, Ecc_EccentricityOfOrbit: -99, Incl_InclinationOfOrbit: -99,
 	}
+}
+
+func GetCometDataParabolic(cometName string) CometDataParabolic {
+	var cometRecords = []CometDataParabolic{
+		{
+			Name: "Kohler", EpochPeriDay: 10.5659, EpochPeriMonth: 11, EpochPeriYear: 1977,
+			ArgPeri: 163.4799, Node: 181.8175, PeriDist: 0.990662, Incl: 48.7196,
+		},
+	}
+
+	for _, cometRecord := range cometRecords {
+		if cometRecord.Name == cometName {
+			return cometRecord
+		}
+	}
+
+	return CometDataParabolic{Name: "NOTFOUND", EpochPeriDay: -99, EpochPeriMonth: -99, EpochPeriYear: -99, ArgPeri: -99, Node: -99, PeriDist: -99, Incl: -99}
 }

@@ -89,3 +89,57 @@ func PositionOfEllipticalComet(
 		RaHour: float64(cometRaHour), RaMin: float64(cometRaMin), DecDeg: cometDecDeg, DecMin: cometDecMin, DistEarth: cometDistEarth,
 	}
 }
+
+/* Calculate position of a parabolic comet. */
+func PositionOfParabolicComet(
+	lctHour float64, lctMin float64, lctSec float64, isDaylightSaving bool, zoneCorrectionHours int,
+	localDateDay float64, localDateMonth int, localDateYear int, cometName string,
+) patype.ParabolicCometPosition {
+	var daylightSaving int
+	if isDaylightSaving {
+		daylightSaving = 1
+	} else {
+		daylightSaving = 0
+	}
+
+	var greenwichDateDay float64 = pamacro.LocalCivilTimeGreenwichDay(
+		lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear)
+	var greenwichDateMonth int = int(pamacro.LocalCivilTimeGreenwichMonth(
+		lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear))
+	var greenwichDateYear int = int(pamacro.LocalCivilTimeGreenwichYear(
+		lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear))
+
+	var cometInfo padata.CometDataParabolic = padata.GetCometDataParabolic(cometName)
+
+	var perihelionEpochDay float64 = cometInfo.EpochPeriDay
+	var perihelionEpochMonth int = cometInfo.EpochPeriMonth
+	var perihelionEpochYear int = cometInfo.EpochPeriYear
+	var qAu float64 = cometInfo.PeriDist
+	var inclinationDeg float64 = cometInfo.Incl
+	var perihelionDeg float64 = cometInfo.ArgPeri
+	var nodeDeg float64 = cometInfo.Node
+
+	var cometLongLatDist patype.CometLongLatDist = pamacro.PCometLongLatDist(
+		lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear,
+		perihelionEpochDay, perihelionEpochMonth, perihelionEpochYear, qAu, inclinationDeg, perihelionDeg, nodeDeg,
+	)
+
+	var cometRaHours float64 = pamacro.DecimalDegreesToDegreeHours(
+		pamacro.EclipticRightAscension(cometLongLatDist.LongDeg, 0, 0, cometLongLatDist.LatDeg, 0, 0, greenwichDateDay, greenwichDateMonth, greenwichDateYear))
+	var cometDecDeg1 float64 = pamacro.EclipticDeclination(
+		cometLongLatDist.LongDeg, 0, 0, cometLongLatDist.LatDeg, 0, 0, greenwichDateDay, greenwichDateMonth, greenwichDateYear)
+
+	var cometRaHour int = pamacro.DecimalHoursHour(cometRaHours)
+	var cometRaMin int = pamacro.DecimalHoursMinute(cometRaHours)
+	var cometRaSec float64 = pamacro.DecimalHoursSecond(cometRaHours)
+	var cometDecDeg float64 = pamacro.DecimalDegreesDegrees(cometDecDeg1)
+	var cometDecMin float64 = pamacro.DecimalDegreesMinutes(cometDecDeg1)
+	var cometDecSec float64 = pamacro.DecimalDegreesSeconds(cometDecDeg1)
+	var cometDistEarth float64 = pautil.RoundTo(cometLongLatDist.DistAu, 2)
+
+	return patype.ParabolicCometPosition{
+		RaHour: float64(cometRaHour), RaMin: float64(cometRaMin), RaSec: cometRaSec,
+		DecDeg: cometDecDeg, DecMin: cometDecMin, DecSec: cometDecSec,
+		DistEarth: cometDistEarth,
+	}
+}
