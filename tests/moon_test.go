@@ -30,3 +30,13 @@ func TestMoonPhase(t *testing.T) {
 
 	require.Equal(t, expectedMoonPhase, actualMoonPhase, "Mismatched Moon Phase")
 }
+
+func TestNewMoonFullMoon(t *testing.T) {
+	var expectedNewMoonFullMoon patype.MoonNewFull = patype.MoonNewFull{
+		NewLocalTimeHour: 17, NewLocalTimeMin: 27, NewLocalDateDay: 27, NewLocalDateMonth: 8, NewLocalDateYear: 2003,
+		FullLocalTimeHour: 16, FullLocalTimeMin: 36, FullLocalDateDay: 10, FullLocalDateMonth: 9, FullLocalDateYear: 2003,
+	}
+	var actualNewMoonFullMoon patype.MoonNewFull = palib.TimesOfNewMoonAndFullMoon(false, 0, 1, 9, 2003)
+
+	require.Equal(t, expectedNewMoonFullMoon, actualNewMoonFullMoon, "Mismatched New Moon/Full Moon")
+}

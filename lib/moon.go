@@ -166,3 +166,59 @@ func MoonPhase(
 
 	return patype.MoonPhase{Phase: moonPhase, BrightLimbDeg: brightLimbDeg}
 }
+
+/* Calculate new moon and full moon instances. */
+func TimesOfNewMoonAndFullMoon(
+	isDaylightSaving bool, zoneCorrectionHours int, localDateDay float64, localDateMonth int, localDateYear int,
+) patype.MoonNewFull {
+	var daylightSaving int
+	if isDaylightSaving {
+		daylightSaving = 1
+	} else {
+		daylightSaving = 0
+	}
+
+	var jdOfNewMoonDays float64 = pamacro.NewMoon(daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear)
+	var jdOfFullMoonDays float64 = pamacro.FullMoon(3, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear)
+
+	var gDateOfNewMoonDay float64 = pamacro.JulianDateDay(jdOfNewMoonDays)
+	var integerDay1 float64 = math.Floor(gDateOfNewMoonDay)
+	var gDateOfNewMoonMonth int = pamacro.JulianDateMonth(jdOfNewMoonDays)
+	var gDateOfNewMoonYear int = pamacro.JulianDateYear(jdOfNewMoonDays)
+
+	var gDateOfFullMoonDay float64 = pamacro.JulianDateDay(jdOfFullMoonDays)
+	var integerDay2 float64 = math.Floor(gDateOfFullMoonDay)
+	var gDateOfFullMoonMonth int = pamacro.JulianDateMonth(jdOfFullMoonDays)
+	var gDateOfFullMoonYear int = pamacro.JulianDateYear(jdOfFullMoonDays)
+
+	var utOfNewMoonHours float64 = 24.0 * (gDateOfNewMoonDay - integerDay1)
+	var utOfFullMoonHours float64 = 24.0 * (gDateOfFullMoonDay - integerDay2)
+	var lctOfNewMoonHours float64 = pamacro.UniversalTimeToLocalCivilTime(
+		utOfNewMoonHours+0.008333, 0, 0, daylightSaving, zoneCorrectionHours, integerDay1, gDateOfNewMoonMonth, gDateOfNewMoonYear)
+	var lctOfFullMoonHours float64 = pamacro.UniversalTimeToLocalCivilTime(
+		utOfFullMoonHours+0.008333, 0, 0, daylightSaving, zoneCorrectionHours, integerDay2, gDateOfFullMoonMonth, gDateOfFullMoonYear)
+
+	var nmLocalTimeHour int = pamacro.DecimalHoursHour(lctOfNewMoonHours)
+	var nmLocalTimeMin int = pamacro.DecimalHoursMinute(lctOfNewMoonHours)
+	var nmLocalDateDay float64 = pamacro.UniversalTimeLocalCivilDay(
+		utOfNewMoonHours, 0, 0, daylightSaving, zoneCorrectionHours, integerDay1, gDateOfNewMoonMonth, gDateOfNewMoonYear)
+	var nmLocalDateMonth int = pamacro.UniversalTimeLocalCivilMonth(
+		utOfNewMoonHours, 0, 0, daylightSaving, zoneCorrectionHours, integerDay1, gDateOfNewMoonMonth, gDateOfNewMoonYear)
+	var nmLocalDateYear int = pamacro.UniversalTimeLocalCivilYear(
+		utOfNewMoonHours, 0, 0, daylightSaving, zoneCorrectionHours, integerDay1, gDateOfNewMoonMonth, gDateOfNewMoonYear)
+	var fmLocalTimeHour int = pamacro.DecimalHoursHour(lctOfFullMoonHours)
+	var fmLocalTimeMin int = pamacro.DecimalHoursMinute(lctOfFullMoonHours)
+	var fmLocalDateDay float64 = pamacro.UniversalTimeLocalCivilDay(
+		utOfFullMoonHours, 0, 0, daylightSaving, zoneCorrectionHours, integerDay2, gDateOfFullMoonMonth, gDateOfFullMoonYear)
+	var fmLocalDateMonth int = pamacro.UniversalTimeLocalCivilMonth(
+		utOfFullMoonHours, 0, 0, daylightSaving, zoneCorrectionHours, integerDay2, gDateOfFullMoonMonth, gDateOfFullMoonYear)
+	var fmLocalDateYear int = pamacro.UniversalTimeLocalCivilYear(
+		utOfFullMoonHours, 0, 0, daylightSaving, zoneCorrectionHours, integerDay2, gDateOfFullMoonMonth, gDateOfFullMoonYear)
+
+	return patype.MoonNewFull{
+		NewLocalTimeHour: float64(nmLocalTimeHour), NewLocalTimeMin: float64(nmLocalTimeMin),
+		NewLocalDateDay: nmLocalDateDay, NewLocalDateMonth: nmLocalDateMonth, NewLocalDateYear: nmLocalDateYear,
+		FullLocalTimeHour: float64(fmLocalTimeHour), FullLocalTimeMin: float64(fmLocalTimeMin),
+		FullLocalDateDay: fmLocalDateDay, FullLocalDateMonth: fmLocalDateMonth, FullLocalDateYear: fmLocalDateYear,
+	}
+}
