@@ -3088,3 +3088,149 @@ func SolveCubic(w float64) float64 {
 
 	return 0
 }
+
+/*
+Longitude, latitude, and horizontal parallax of the Moon.
+
+Original macro names: MoonLong, MoonLat, MoonHP
+*/
+func MoonLongLatHp(lh float64, lm float64, ls float64, ds int, zc int, dy float64, mn int, yr int) patype.MoonLongLatHP {
+	var ut float64 = LocalCivilTimeToUniversalTime(lh, lm, ls, ds, zc, dy, mn, yr)
+	var gd float64 = LocalCivilTimeGreenwichDay(lh, lm, ls, ds, zc, dy, mn, yr)
+	var gm int = int(LocalCivilTimeGreenwichMonth(lh, lm, ls, ds, zc, dy, mn, yr))
+	var gy int = int(LocalCivilTimeGreenwichYear(lh, lm, ls, ds, zc, dy, mn, yr))
+	var t float64 = ((CivilDateToJulianDate(gd, float64(gm), float64(gy)) - 2415020.0) / 36525.0) + (ut / 876600.0)
+	var t2 float64 = t * t
+
+	var m1 float64 = 27.32158213
+	var m2 float64 = 365.2596407
+	var m3 float64 = 27.55455094
+	var m4 float64 = 29.53058868
+	var m5 float64 = 27.21222039
+	var m6 float64 = 6798.363307
+	var q float64 = CivilDateToJulianDate(gd, float64(gm), float64(gy)) - 2415020.0 + (ut / 24.0)
+	m1 = q / m1
+	m2 = q / m2
+	m3 = q / m3
+	m4 = q / m4
+	m5 = q / m5
+	m6 = q / m6
+	m1 = 360.0 * (m1 - math.Floor(m1))
+	m2 = 360.0 * (m2 - math.Floor(m2))
+	m3 = 360.0 * (m3 - math.Floor(m3))
+	m4 = 360.0 * (m4 - math.Floor(m4))
+	m5 = 360.0 * (m5 - math.Floor(m5))
+	m6 = 360.0 * (m6 - math.Floor(m6))
+
+	var ml float64 = 270.434164 + m1 - (0.001133-0.0000019*t)*t2
+	var ms float64 = 358.475833 + m2 - (0.00015+0.0000033*t)*t2
+	var md float64 = 296.104608 + m3 + (0.009192+0.0000144*t)*t2
+	var me1 float64 = 350.737486 + m4 - (0.001436-0.0000019*t)*t2
+	var mf float64 = 11.250889 + m5 - (0.003211+0.0000003*t)*t2
+	var na float64 = 259.183275 - m6 + (0.002078+0.0000022*t)*t2
+	var a float64 = pautil.DegreesToRadians(51.2 + 20.2*t)
+	var s1 float64 = math.Sin(a)
+	var s2 float64 = math.Sin(pautil.DegreesToRadians(na))
+	var b float64 = 346.56 + (132.87-0.0091731*t)*t
+	var s3 float64 = 0.003964 * math.Sin(pautil.DegreesToRadians(b))
+	var c float64 = pautil.DegreesToRadians(na + 275.05 - 2.3*t)
+	var s4 float64 = math.Sin(c)
+	ml = ml + 0.000233*s1 + s3 + 0.001964*s2
+	ms -= 0.001778 * s1
+	md = md + 0.000817*s1 + s3 + 0.002541*s2
+	mf = mf + s3 - 0.024691*s2 - 0.004328*s4
+	me1 = me1 + 0.002011*s1 + s3 + 0.001964*s2
+	var e float64 = 1.0 - (0.002495+0.00000752*t)*t
+	var e2 float64 = e * e
+	ml = pautil.DegreesToRadians(ml)
+	ms = pautil.DegreesToRadians(ms)
+	na = pautil.DegreesToRadians(na)
+	me1 = pautil.DegreesToRadians(me1)
+	mf = pautil.DegreesToRadians(mf)
+	md = pautil.DegreesToRadians(md)
+
+	// Longitude-specific
+	var l float64 = 6.28875*math.Sin(md) + 1.274018*math.Sin(2.0*me1-md)
+	l = l + 0.658309*math.Sin(2.0*me1) + 0.213616*math.Sin(2.0*md)
+	l = l - e*0.185596*math.Sin(ms) - 0.114336*math.Sin(2.0*mf)
+	l += 0.058793 * math.Sin(2.0*(me1-md))
+	l = l + 0.057212*e*math.Sin(2.0*me1-ms-md) + 0.05332*math.Sin(2.0*me1+md)
+	l = l + 0.045874*e*math.Sin(2.0*me1-ms) + 0.041024*e*math.Sin(md-ms)
+	l = l - 0.034718*math.Sin(me1) - e*0.030465*math.Sin(ms+md)
+	l = l + 0.015326*math.Sin(2.0*(me1-mf)) - 0.012528*math.Sin(2.0*mf+md)
+	l = l - 0.01098*math.Sin(2.0*mf-md) + 0.010674*math.Sin(4.0*me1-md)
+	l = l + 0.010034*math.Sin(3.0*md) + 0.008548*math.Sin(4.0*me1-2.0*md)
+	l = l - e*0.00791*math.Sin(ms-md+2.0*me1) - e*0.006783*math.Sin(2.0*me1+ms)
+	l = l + 0.005162*math.Sin(md-me1) + e*0.005*math.Sin(ms+me1)
+	l = l + 0.003862*math.Sin(4.0*me1) + e*0.004049*math.Sin(md-ms+2.0*me1)
+	l = l + 0.003996*math.Sin(2.0*(md+me1)) + 0.003665*math.Sin(2.0*me1-3.0*md)
+	l = l + e*0.002695*math.Sin(2.0*md-ms) + 0.002602*math.Sin(md-2.0*(mf+me1))
+	l = l + e*0.002396*math.Sin(2.0*(me1-md)-ms) - 0.002349*math.Sin(md+me1)
+	l = l + e2*0.002249*math.Sin(2.0*(me1-ms)) - e*0.002125*math.Sin(2.0*md+ms)
+	l = l - e2*0.002079*math.Sin(2.0*ms) + e2*0.002059*math.Sin(2.0*(me1-ms)-md)
+	l = l - 0.001773*math.Sin(md+2.0*(me1-mf)) - 0.001595*math.Sin(2.0*(mf+me1))
+	l = l + e*0.00122*math.Sin(4.0*me1-ms-md) - 0.00111*math.Sin(2.0*(md+mf))
+	l = l + 0.000892*math.Sin(md-3.0*me1) - e*0.000811*math.Sin(ms+md+2.0*me1)
+	l += e * 0.000761 * math.Sin(4.0*me1-ms-2.0*md)
+	l += e2 * 0.000704 * math.Sin(md-2.0*(ms+me1))
+	l += e * 0.000693 * math.Sin(ms-2.0*(md-me1))
+	l += e * 0.000598 * math.Sin(2.0*(me1-mf)-ms)
+	l = l + 0.00055*math.Sin(md+4.0*me1) + 0.000538*math.Sin(4.0*md)
+	l = l + e*0.000521*math.Sin(4.0*me1-ms) + 0.000486*math.Sin(2.0*md-me1)
+	l += e2 * 0.000717 * math.Sin(md-2.0*ms)
+	var mm float64 = Unwind(ml + pautil.DegreesToRadians(l))
+
+	// Latitude-specific
+	var g float64 = 5.128189*math.Sin(mf) + 0.280606*math.Sin(md+mf)
+	g = g + 0.277693*math.Sin(md-mf) + 0.173238*math.Sin(2.0*me1-mf)
+	g = g + 0.055413*math.Sin(2.0*me1+mf-md) + 0.046272*math.Sin(2.0*me1-mf-md)
+	g = g + 0.032573*math.Sin(2.0*me1+mf) + 0.017198*math.Sin(2.0*md+mf)
+	g = g + 0.009267*math.Sin(2.0*me1+md-mf) + 0.008823*math.Sin(2.0*md-mf)
+	g = g + e*0.008247*math.Sin(2.0*me1-ms-mf) + 0.004323*math.Sin(2.0*(me1-md)-mf)
+	g = g + 0.0042*math.Sin(2.0*me1+mf+md) + e*0.003372*math.Sin(mf-ms-2.0*me1)
+	g += e * 0.002472 * math.Sin(2.0*me1+mf-ms-md)
+	g += e * 0.002222 * math.Sin(2.0*me1+mf-ms)
+	g += e * 0.002072 * math.Sin(2.0*me1-mf-ms-md)
+	g = g + e*0.001877*math.Sin(mf-ms+md) + 0.001828*math.Sin(4.0*me1-mf-md)
+	g = g - e*0.001803*math.Sin(mf+ms) - 0.00175*math.Sin(3.0*mf)
+	g = g + e*0.00157*math.Sin(md-ms-mf) - 0.001487*math.Sin(mf+me1)
+	g = g - e*0.001481*math.Sin(mf+ms+md) + e*0.001417*math.Sin(mf-ms-md)
+	g = g + e*0.00135*math.Sin(mf-ms) + 0.00133*math.Sin(mf-me1)
+	g = g + 0.001106*math.Sin(mf+3.0*md) + 0.00102*math.Sin(4.0*me1-mf)
+	g = g + 0.000833*math.Sin(mf+4.0*me1-md) + 0.000781*math.Sin(md-3.0*mf)
+	g = g + 0.00067*math.Sin(mf+4.0*me1-2.0*md) + 0.000606*math.Sin(2.0*me1-3.0*mf)
+	g += 0.000597 * math.Sin(2.0*(me1+md)-mf)
+	g = g + e*0.000492*math.Sin(2.0*me1+md-ms-mf) + 0.00045*math.Sin(2.0*(md-me1)-mf)
+	g = g + 0.000439*math.Sin(3.0*md-mf) + 0.000423*math.Sin(mf+2.0*(me1+md))
+	g = g + 0.000422*math.Sin(2.0*me1-mf-3.0*md) - e*0.000367*math.Sin(ms+mf+2.0*me1-md)
+	g = g - e*0.000353*math.Sin(ms+mf+2.0*me1) + 0.000331*math.Sin(mf+4.0*me1)
+	g += e * 0.000317 * math.Sin(2.0*me1+mf-ms+md)
+	g = g + e2*0.000306*math.Sin(2.0*(me1-ms)-mf) - 0.000283*math.Sin(md+3.0*mf)
+	var w1 float64 = 0.0004664 * math.Cos(na)
+	var w2 float64 = 0.0000754 * math.Cos(c)
+	var bm float64 = pautil.DegreesToRadians(g) * (1.0 - w1 - w2)
+
+	// Horizontal parallax-specific
+	var pm float64 = 0.950724 + 0.051818*math.Cos(md) + 0.009531*math.Cos(2.0*me1-md)
+	pm = pm + 0.007843*math.Cos(2.0*me1) + 0.002824*math.Cos(2.0*md)
+	pm = pm + 0.000857*math.Cos(2.0*me1+md) + e*0.000533*math.Cos(2.0*me1-ms)
+	pm += e * 0.000401 * math.Cos(2.0*me1-md-ms)
+	pm = pm + e*0.00032*math.Cos(md-ms) - 0.000271*math.Cos(me1)
+	pm = pm - e*0.000264*math.Cos(ms+md) - 0.000198*math.Cos(2.0*mf-md)
+	pm = pm + 0.000173*math.Cos(3.0*md) + 0.000167*math.Cos(4.0*me1-md)
+	pm = pm - e*0.000111*math.Cos(ms) + 0.000103*math.Cos(4.0*me1-2.0*md)
+	pm = pm - 0.000084*math.Cos(2.0*md-2.0*me1) - e*0.000083*math.Cos(2.0*me1+ms)
+	pm = pm + 0.000079*math.Cos(2.0*me1+2.0*md) + 0.000072*math.Cos(4.0*me1)
+	pm = pm + e*0.000064*math.Cos(2.0*me1-ms+md) - e*0.000063*math.Cos(2.0*me1+ms-md)
+	pm = pm + e*0.000041*math.Cos(ms+me1) + e*0.000035*math.Cos(2.0*md-ms)
+	pm = pm - 0.000033*math.Cos(3.0*md-2.0*me1) - 0.00003*math.Cos(md+me1)
+	pm = pm - 0.000029*math.Cos(2.0*(mf-me1)) - e*0.000029*math.Cos(2.0*md+ms)
+	pm = pm + e2*0.000026*math.Cos(2.0*(me1-ms)) - 0.000023*math.Cos(2.0*(mf-me1)+md)
+	pm += e * 0.000019 * math.Cos(4.0*me1-ms-md)
+
+	var moon_long_deg float64 = Degrees(mm)
+	var moon_lat_deg float64 = Degrees(bm)
+	var moon_hor_para float64 = pm
+
+	return patype.MoonLongLatHP{LongDeg: moon_long_deg, LatDeg: moon_lat_deg, HorPara: moon_hor_para}
+}
