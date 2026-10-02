@@ -81,12 +81,7 @@ func LocalCivilTimeToUniversalTime(
 ) patype.FullDateTime {
 	var lct float64 = CivilTimeToDecimalHours(lctHours, lctMinutes, lctSeconds)
 
-	var daylightSavingsOffset int
-	if isDaylightSavings {
-		daylightSavingsOffset = 1
-	} else {
-		daylightSavingsOffset = 0
-	}
+	var daylightSavingsOffset int = pautil.BoolToInt(isDaylightSavings)
 
 	var utInterim float64 = lct - float64(daylightSavingsOffset) - float64(zoneCorrection)
 	var gDayInterim float64 = localDay + (utInterim / 24)
@@ -112,12 +107,7 @@ func LocalCivilTimeToUniversalTime(
 /* Convert universal time to local civil time. */
 func UniversalTimeToLocalCivilTime(utHours float64, utMinutes float64, utSeconds float64, isDaylightSavings bool, zoneCorrection int,
 	gwDay int, gwMonth int, gwYear int) patype.FullDateTime {
-	var dstValue int
-	if isDaylightSavings {
-		dstValue = 1
-	} else {
-		dstValue = 0
-	}
+	var dstValue int = pautil.BoolToInt(isDaylightSavings)
 
 	var ut float64 = pamacro.HmsDh(utHours, utMinutes, utSeconds)
 	var zoneTime float64 = ut + float64(zoneCorrection)

@@ -37,3 +37,12 @@ func DegreesToRadians(degrees float64) float64 {
 func RadiansToDegrees(radians float64) float64 {
 	return (radians * 180) / math.Pi
 }
+
+/* Given a boolean input, return an int value of 1 or 0 representing the value */
+func BoolToInt(value bool) int {
+	if value {
+		return 1
+	}
+
+	return 0
+}

@@ -13,12 +13,7 @@ func PositionOfEllipticalComet(
 	lctHour float64, lctMin float64, lctSec float64, isDaylightSaving bool, zoneCorrectionHours int,
 	localDateDay float64, localDateMonth int, localDateYear int, cometName string,
 ) patype.EllipticalCometPosition {
-	var daylightSaving int
-	if isDaylightSaving {
-		daylightSaving = 1
-	} else {
-		daylightSaving = 0
-	}
+	var daylightSaving int = pautil.BoolToInt(isDaylightSaving)
 
 	var greenwichDateDay float64 = pamacro.LocalCivilTimeGreenwichDay(
 		lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear)
@@ -95,12 +90,7 @@ func PositionOfParabolicComet(
 	lctHour float64, lctMin float64, lctSec float64, isDaylightSaving bool, zoneCorrectionHours int,
 	localDateDay float64, localDateMonth int, localDateYear int, cometName string,
 ) patype.ParabolicCometPosition {
-	var daylightSaving int
-	if isDaylightSaving {
-		daylightSaving = 1
-	} else {
-		daylightSaving = 0
-	}
+	var daylightSaving int = pautil.BoolToInt(isDaylightSaving)
 
 	var greenwichDateDay float64 = pamacro.LocalCivilTimeGreenwichDay(
 		lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear)

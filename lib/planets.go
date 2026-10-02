@@ -13,12 +13,7 @@ func ApproximatePositionOfPlanet(
 	lctHour float64, lctMin float64, lctSec float64, isDaylightSaving bool, zoneCorrectionHours int,
 	localDateDay float64, localDateMonth int, localDateYear int, planetName string,
 ) patype.PlanetPosition {
-	var daylightSaving int
-	if isDaylightSaving {
-		daylightSaving = 1
-	} else {
-		daylightSaving = 0
-	}
+	var daylightSaving int = pautil.BoolToInt(isDaylightSaving)
 
 	var planetInfo padata.PlanetRecord = padata.GetPlanetData(planetName)
 
@@ -97,12 +92,7 @@ func ApproximatePositionOfPlanet(
 func PrecisePositionOfPlanet(
 	lctHour float64, lctMin float64, lctSec float64, isDaylightSaving bool, zoneCorrectionHours int,
 	localDateDay float64, localDateMonth int, localDateYear int, planetName string) patype.PlanetPosition {
-	var daylightSaving int
-	if isDaylightSaving {
-		daylightSaving = 1
-	} else {
-		daylightSaving = 0
-	}
+	var daylightSaving int = pautil.BoolToInt(isDaylightSaving)
 
 	var coordinateResults patype.PlanetCoordinates = pamacro.PlanetCoordinates(
 		lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear, planetName)
@@ -130,12 +120,7 @@ func VisualAspectsOfAPlanet(
 	lctHour float64, lctMin float64, lctSec float64, isDaylightSaving bool, zoneCorrectionHours int,
 	localDateDay float64, localDateMonth int, localDateYear int, planetName string,
 ) patype.PlanetVisualAspects {
-	var daylightSaving int
-	if isDaylightSaving {
-		daylightSaving = 1
-	} else {
-		daylightSaving = 0
-	}
+	var daylightSaving int = pautil.BoolToInt(isDaylightSaving)
 
 	var greenwichDateDay float64 = pamacro.LocalCivilTimeGreenwichDay(
 		lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear)

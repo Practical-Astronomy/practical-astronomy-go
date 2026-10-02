@@ -12,12 +12,7 @@ func ApproximatePositionOfSun(
 	lctHours float64, lctMinutes float64, lctSeconds float64, localDay float64, localMonth int, localYear int,
 	isDaylightSaving bool, zoneCorrection int,
 ) patype.SunPosition {
-	var daylightSaving int
-	if isDaylightSaving == true {
-		daylightSaving = 1
-	} else {
-		daylightSaving = 0
-	}
+	var daylightSaving int = pautil.BoolToInt(isDaylightSaving)
 
 	var greenwichDateDay float64 = pamacro.LocalCivilTimeGreenwichDay(
 		lctHours, lctMinutes, lctSeconds, daylightSaving, zoneCorrection, localDay, localMonth, localYear)
@@ -57,12 +52,7 @@ func PrecisePositionOfSun(
 	lctHours float64, lctMinutes float64, lctSeconds float64, localDay float64, localMonth int, localYear int,
 	isDaylightSaving bool, zoneCorrection int,
 ) patype.SunPosition {
-	var daylightSaving int
-	if isDaylightSaving == true {
-		daylightSaving = 1
-	} else {
-		daylightSaving = 0
-	}
+	var daylightSaving int = pautil.BoolToInt(isDaylightSaving)
 
 	var gDay float64 = pamacro.LocalCivilTimeGreenwichDay(lctHours, lctMinutes, lctSeconds, daylightSaving, zoneCorrection, localDay, localMonth, localYear)
 	var gMonth int = int(pamacro.LocalCivilTimeGreenwichMonth(lctHours, lctMinutes, lctSeconds, daylightSaving, zoneCorrection, localDay, localMonth, localYear))
@@ -90,12 +80,7 @@ func SunDistanceAndAngularSize(
 	lctHours float64, lctMinutes float64, lctSeconds float64, localDay float64, localMonth int, localYear int,
 	isDaylightSaving bool, zoneCorrection int,
 ) patype.SunDistanceSize {
-	var daylightSaving int
-	if isDaylightSaving {
-		daylightSaving = 1
-	} else {
-		daylightSaving = 0
-	}
+	var daylightSaving int = pautil.BoolToInt(isDaylightSaving)
 
 	var gDay float64 = pamacro.LocalCivilTimeGreenwichDay(lctHours, lctMinutes, lctSeconds, daylightSaving, zoneCorrection, localDay, localMonth, localYear)
 	var gMonth int = int(pamacro.LocalCivilTimeGreenwichMonth(lctHours, lctMinutes, lctSeconds, daylightSaving, zoneCorrection, localDay, localMonth, localYear))
@@ -121,12 +106,7 @@ func SunriseAndSunset(
 	localDay float64, localMonth int, localYear int, isDaylightSaving bool, zoneCorrection int,
 	geographicalLongDeg float64, geographicalLatDeg float64,
 ) patype.SunriseSunsetInfo {
-	var daylightSaving int
-	if isDaylightSaving {
-		daylightSaving = 1
-	} else {
-		daylightSaving = 0
-	}
+	var daylightSaving int = pautil.BoolToInt(isDaylightSaving)
 
 	var localSunriseHours float64 = pamacro.SunriseLct(
 		localDay, localMonth, localYear, daylightSaving, zoneCorrection, geographicalLongDeg, geographicalLatDeg)
@@ -197,12 +177,7 @@ func MorningAndEveningTwilight(
 	localDay float64, localMonth int, localYear int, isDaylightSaving bool, zoneCorrection int,
 	geographicalLongDeg float64, geographicalLatDeg float64, twilightType patype.TwilightType,
 ) patype.TwilightInfo {
-	var daylightSaving int
-	if isDaylightSaving {
-		daylightSaving = 1
-	} else {
-		daylightSaving = 0
-	}
+	var daylightSaving int = pautil.BoolToInt(isDaylightSaving)
 
 	var startOfAmTwilightHours float64 = pamacro.TwilightAmLct(
 		localDay, localMonth, localYear, daylightSaving, zoneCorrection, geographicalLongDeg, geographicalLatDeg, twilightType)

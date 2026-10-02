@@ -12,12 +12,7 @@ func ApproximatePositionOfMoon(
 	lctHour float64, lctMin float64, lctSec float64, isDaylightSaving bool, zoneCorrectionHours int,
 	localDateDay float64, localDateMonth int, localDateYear int,
 ) patype.MoonApproximatePosition {
-	var daylightSaving int
-	if isDaylightSaving {
-		daylightSaving = 1
-	} else {
-		daylightSaving = 0
-	}
+	var daylightSaving int = pautil.BoolToInt(isDaylightSaving)
 
 	var l0 float64 = 91.9293359879052
 	var p0 float64 = 130.143076320618
@@ -78,12 +73,7 @@ func PrecisePositionOfMoon(
 	lctHour float64, lctMin float64, lctSec float64, isDaylightSaving bool, zoneCorrectionHours int,
 	localDateDay float64, localDateMonth int, localDateYear int,
 ) patype.MoonPrecisePosition {
-	var daylightSaving int
-	if isDaylightSaving {
-		daylightSaving = 1
-	} else {
-		daylightSaving = 0
-	}
+	var daylightSaving int = pautil.BoolToInt(isDaylightSaving)
 
 	var gdateDay float64 = pamacro.LocalCivilTimeGreenwichDay(
 		lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear)
@@ -123,12 +113,7 @@ func MoonPhase(
 	lctHour float64, lctMin float64, lctSec float64, isDaylightSaving bool, zoneCorrectionHours int,
 	localDateDay float64, localDateMonth int, localDateYear int, accuracyLevel patype.AccuracyLevel,
 ) patype.MoonPhase {
-	var daylightSaving int
-	if isDaylightSaving {
-		daylightSaving = 1
-	} else {
-		daylightSaving = 0
-	}
+	var daylightSaving int = pautil.BoolToInt(isDaylightSaving)
 
 	var gdateDay float64 = pamacro.LocalCivilTimeGreenwichDay(
 		lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear)
@@ -171,12 +156,7 @@ func MoonPhase(
 func TimesOfNewMoonAndFullMoon(
 	isDaylightSaving bool, zoneCorrectionHours int, localDateDay float64, localDateMonth int, localDateYear int,
 ) patype.MoonNewFull {
-	var daylightSaving int
-	if isDaylightSaving {
-		daylightSaving = 1
-	} else {
-		daylightSaving = 0
-	}
+	var daylightSaving int = pautil.BoolToInt(isDaylightSaving)
 
 	var jdOfNewMoonDays float64 = pamacro.NewMoon(daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear)
 	var jdOfFullMoonDays float64 = pamacro.FullMoon(3, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear)

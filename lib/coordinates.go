@@ -61,12 +61,7 @@ func RightAscensionToHourAngle(
 	raHours float64, raMinutes float64, raSeconds float64, lctHours float64, lctMinutes float64, lctSeconds float64,
 	isDaylightSavings bool, zoneCorrection int, localDay float64, localMonth int, localYear int, geographicalLongitude float64,
 ) patype.HourAngle {
-	var daylightSaving int
-	if isDaylightSavings {
-		daylightSaving = 1
-	} else {
-		daylightSaving = 0
-	}
+	var daylightSaving int = pautil.BoolToInt(isDaylightSavings)
 
 	var hourAngle float64 = pamacro.RightAscensionToHourAngle(raHours, raMinutes, raSeconds, lctHours, lctMinutes, lctSeconds, daylightSaving, zoneCorrection, localDay, localMonth, localYear, geographicalLongitude)
 
@@ -82,12 +77,7 @@ func HourAngleToRightAscension(
 	hourAngleHours float64, hourAngleMinutes float64, hourAngleSeconds float64, lctHours float64, lctMinutes float64, lctSeconds float64,
 	isDaylightSavings bool, zoneCorrection int, localDay float64, localMonth int, localYear int, geographicalLongitude float64,
 ) patype.RightAscension {
-	var daylightSaving int
-	if isDaylightSavings {
-		daylightSaving = 1
-	} else {
-		daylightSaving = 0
-	}
+	var daylightSaving int = pautil.BoolToInt(isDaylightSavings)
 
 	var rightAscension float64 = pamacro.HourAngleToRightAscension(hourAngleHours, hourAngleMinutes, hourAngleSeconds, lctHours, lctMinutes, lctSeconds, daylightSaving, zoneCorrection, localDay, localMonth, localYear, geographicalLongitude)
 
