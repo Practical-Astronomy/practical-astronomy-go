@@ -229,3 +229,47 @@ func MoonDistAngDiamHorParallax(
 		HorParallaxDeg: horParallaxDeg, HorParallaxMin: horParallaxMin, HorParallaxSec: horParallaxSec,
 	}
 }
+
+/* Calculate date/time of local moonrise and moonset. */
+func MoonriseAndMoonset(
+	localDateDay float64, localDateMonth int, localDateYear int, isDaylightSaving bool, zoneCorrectionHours int,
+	geogLongDeg float64, geogLatDeg float64,
+) patype.MoonRiseSet {
+	var daylightSaving int = pautil.BoolToInt(isDaylightSaving)
+
+	var localTimeOfMoonriseHours float64 = pamacro.MoonRiseLct(
+		localDateDay, localDateMonth, localDateYear, daylightSaving, zoneCorrectionHours, geogLongDeg, geogLatDeg)
+	var moonRiseLcResult patype.FullDatePrecise = pamacro.MoonRiseLcDmy(
+		localDateDay, localDateMonth, localDateYear, daylightSaving, zoneCorrectionHours, geogLongDeg, geogLatDeg)
+	var localAzimuthDeg1 float64 = pamacro.MoonRiseAz(
+		localDateDay, localDateMonth, localDateYear, daylightSaving, zoneCorrectionHours, geogLongDeg, geogLatDeg)
+
+	var localTimeOfMoonsetHours float64 = pamacro.MoonSetLct(
+		localDateDay, localDateMonth, localDateYear, daylightSaving, zoneCorrectionHours, geogLongDeg, geogLatDeg)
+	var moonSetLcResult patype.FullDatePrecise = pamacro.MoonSetLcDmy(
+		localDateDay, localDateMonth, localDateYear, daylightSaving, zoneCorrectionHours, geogLongDeg, geogLatDeg)
+	var localAzimuthDeg2 float64 = pamacro.MoonSetAz(
+		localDateDay, localDateMonth, localDateYear, daylightSaving, zoneCorrectionHours, geogLongDeg, geogLatDeg)
+
+	var mrLtHour int = pamacro.DecimalHoursHour(localTimeOfMoonriseHours + 0.008333)
+	var mrLtMin int = pamacro.DecimalHoursMinute(localTimeOfMoonriseHours + 0.008333)
+	var mrLocalDateDay float64 = moonRiseLcResult.Day
+	var mrLocalDateMonth int = moonRiseLcResult.Month
+	var mrLocalDateYear int = moonRiseLcResult.Year
+	var mrAzimuthDeg float64 = pautil.RoundTo(localAzimuthDeg1, 2)
+	var msLtHour int = pamacro.DecimalHoursHour(localTimeOfMoonsetHours + 0.008333)
+	var msLtMin int = pamacro.DecimalHoursMinute(localTimeOfMoonsetHours + 0.008333)
+	var msLocalDateDay float64 = moonSetLcResult.Day
+	var msLocalDateMonth int = moonSetLcResult.Month
+	var msLocalDateYear int = moonSetLcResult.Year
+	var msAzimuthDeg float64 = pautil.RoundTo(localAzimuthDeg2, 2)
+
+	return patype.MoonRiseSet{
+		RiseLocalTimeHour: float64(mrLtHour), RiseLocalTimeMin: float64(mrLtMin),
+		RiseLocalDateDay: mrLocalDateDay, RiseLocalDateMonth: mrLocalDateMonth, RiseLocalDateYear: mrLocalDateYear,
+		RiseAzimuthDeg:   mrAzimuthDeg,
+		SetLocalTimeHour: float64(msLtHour), SetLocalTimeMin: float64(msLtMin),
+		SetLocalDateDay: msLocalDateDay, SetLocalDateMonth: msLocalDateMonth, SetLocalDateYear: msLocalDateYear,
+		SetAzimuthDeg: msAzimuthDeg,
+	}
+}

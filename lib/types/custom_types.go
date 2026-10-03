@@ -7,6 +7,13 @@ type FullDate struct {
 	Year  int
 }
 
+/* Date information with individual month, day, and year properties + extra day precision */
+type FullDatePrecise struct {
+	Month int
+	Day   float64
+	Year  int
+}
+
 /* Time information with individual hours, minutes, and seconds properties */
 type FullTime struct {
 	Hours   int
@@ -375,3 +382,115 @@ type MoonDistDiameterHorParallax struct {
 	HorParallaxMin float64
 	HorParallaxSec float64
 }
+
+type MoonRiseSet struct {
+	RiseLocalTimeHour  float64
+	RiseLocalTimeMin   float64
+	RiseLocalDateDay   float64
+	RiseLocalDateMonth int
+	RiseLocalDateYear  int
+	RiseAzimuthDeg     float64
+	SetLocalTimeHour   float64
+	SetLocalTimeMin    float64
+	SetLocalDateDay    float64
+	SetLocalDateMonth  int
+	SetLocalDateYear   int
+	SetAzimuthDeg      float64
+}
+
+type MoonRiseLCTL6680 struct {
+	Ut  float64
+	Lct float64
+	Dy1 float64
+	Mn1 int
+	Yr1 int
+	Gdy float64
+	Gmn int
+	Gyr int
+}
+
+type (
+	MoonSetLCTL6680 = MoonRiseLCTL6680
+)
+
+type MoonRiseLCTL6700 struct {
+	Mm  float64
+	Bm  float64
+	Pm  float64
+	Dp  float64
+	Th  float64
+	Di  float64
+	P   float64
+	Q   float64
+	Lu  float64
+	Lct float64
+}
+
+type (
+	MoonSetLCTL6700 = MoonRiseLCTL6700
+)
+
+type MoonRiseLcDMYL6680 struct {
+	Ut  float64
+	Lct float64
+	Dy1 float64
+	Mn1 int
+	Yr1 int
+	Gdy float64
+	Gmn int
+	Gyr int
+}
+
+type (
+	MoonSetLcDMYL6680 = MoonRiseLcDMYL6680
+)
+
+type MoonRiseLcDMYL6700 struct {
+	Mm  float64
+	Bm  float64
+	Pm  float64
+	Dp  float64
+	Th  float64
+	Di  float64
+	P   float64
+	Q   float64
+	Lu  float64
+	Lct float64
+}
+
+type (
+	MoonSetLcDMYL6700 = MoonRiseLcDMYL6700
+)
+
+type MoonRiseAzL6680 struct {
+	Ut  float64
+	Lct float64
+	Dy1 float64
+	Mn1 int
+	Yr1 int
+	Gdy float64
+	Gmn int
+	Gyr int
+}
+
+type (
+	MoonSetAzL6680 = MoonRiseAzL6680
+)
+
+type MoonRiseAzL6700 struct {
+	Mm  float64
+	Bm  float64
+	Pm  float64
+	Dp  float64
+	Th  float64
+	Di  float64
+	P   float64
+	Q   float64
+	Lu  float64
+	Lct float64
+	Au  float64
+}
+
+type (
+	MoonSetAzL6700 = MoonRiseAzL6700
+)
