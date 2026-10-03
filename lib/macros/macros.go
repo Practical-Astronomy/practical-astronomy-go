@@ -2264,9 +2264,10 @@ For W, in radians, return S, also in radians.
 Original macro name: SolveCubic
 */
 func SolveCubic(w float64) float64 {
+	var maxIterations int = 10000
 	var s float64 = w / 3.0
 
-	for 1 == 1 {
+	for range maxIterations {
 		var s2 float64 = s * s
 		var d float64 = (s2+3.0)*s - w
 
