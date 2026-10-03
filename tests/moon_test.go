@@ -48,3 +48,17 @@ func TestMoonDistAngDiamHorParallax(t *testing.T) {
 
 	require.Equal(t, expectedMoonDist, actualMoonDist, "Mismatched Moon Distance/Angular Diameter/Horizontal Parallax")
 }
+
+func TestMoonRiseSet(t *testing.T) {
+	var expectedMoonRiseSet patype.MoonRiseSet = patype.MoonRiseSet{
+		RiseLocalTimeHour: 4, RiseLocalTimeMin: 21,
+		RiseLocalDateDay: 6, RiseLocalDateMonth: 3, RiseLocalDateYear: 1986,
+		RiseAzimuthDeg:   127.34,
+		SetLocalTimeHour: 13, SetLocalTimeMin: 8,
+		SetLocalDateDay: 6, SetLocalDateMonth: 3, SetLocalDateYear: 1986,
+		SetAzimuthDeg: 234.05,
+	}
+	var actualMoonRiseSet patype.MoonRiseSet = palib.MoonriseAndMoonset(6, 3, 1986, false, -5, -71.05, 42.3667)
+
+	require.Equal(t, expectedMoonRiseSet, actualMoonRiseSet, "Mismatched Moon Rise/Set")
+}

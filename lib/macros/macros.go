@@ -3306,11 +3306,11 @@ func MoonLongLatHp(lh float64, lm float64, ls float64, ds int, zc int, dy float6
 	pm = pm + e2*0.000026*math.Cos(2.0*(me1-ms)) - 0.000023*math.Cos(2.0*(mf-me1)+md)
 	pm += e * 0.000019 * math.Cos(4.0*me1-ms-md)
 
-	var moon_long_deg float64 = Degrees(mm)
-	var moon_lat_deg float64 = Degrees(bm)
-	var moon_hor_para float64 = pm
+	var moonLongDeg float64 = Degrees(mm)
+	var moonLatDeg float64 = Degrees(bm)
+	var moonHorPara float64 = pm
 
-	return patype.MoonLongLatHP{LongDeg: moon_long_deg, LatDeg: moon_lat_deg, HorPara: moon_hor_para}
+	return patype.MoonLongLatHP{LongDeg: moonLongDeg, LatDeg: moonLatDeg, HorPara: moonHorPara}
 }
 
 /*
@@ -3499,4 +3499,698 @@ func Sign(numberToCheck float64) float64 {
 	}
 
 	return signValue
+}
+
+/*
+Local time of moonrise.
+
+Original macro name: MoonRiseLCT
+*/
+func MoonRiseLct(dy float64, mn int, yr int, ds int, zc int, gLong float64, gLat float64) float64 {
+	var gdy float64 = LocalCivilTimeGreenwichDay(12.0, 0.0, 0.0, ds, zc, dy, mn, yr)
+	var gmn int = int(LocalCivilTimeGreenwichMonth(12.0, 0.0, 0.0, ds, zc, dy, mn, yr))
+	var gyr int = int(LocalCivilTimeGreenwichYear(12.0, 0.0, 0.0, ds, zc, dy, mn, yr))
+	var lct float64 = 12.0
+	var dy1 float64 = dy
+	var mn1 int = mn
+	var yr1 int = yr
+
+	var lct6700Result1 patype.MoonRiseLCTL6700 = MoonRiseLctL6700(lct, ds, zc, dy1, mn1, yr1, gdy, gmn, gyr, gLat)
+	var lu float64 = lct6700Result1.Lu
+	lct = lct6700Result1.Lct
+
+	if lct == -99.0 {
+		return lct
+	}
+
+	var la float64 = lu
+
+	var x float64
+	var ut float64
+	var g1 float64 = 0.0
+	var gu float64 = 0.0
+
+	for k := 1; k < 9; k++ {
+		x = LocalSiderealTimeToGreenwichSiderealTime(la, 0.0, 0.0, gLong)
+		ut = GreenwichSiderealTimeToUniversalTime(x, 0.0, 0.0, gdy, gmn, gyr)
+
+		if k == 1 {
+			g1 = ut
+		} else {
+			g1 = gu
+		}
+
+		gu = ut
+		ut = gu
+
+		var lct6680Result patype.MoonRiseLCTL6680 = MoonRiseLctL6680(x, ds, zc, gdy, gmn, gyr, g1, ut)
+		lct = lct6680Result.Lct
+		dy1 = lct6680Result.Dy1
+		mn1 = lct6680Result.Mn1
+		yr1 = lct6680Result.Yr1
+		gdy = lct6680Result.Gdy
+		gmn = lct6680Result.Gmn
+		gyr = lct6680Result.Gyr
+
+		var lct6700Result2 patype.MoonRiseLCTL6700 = MoonRiseLctL6700(lct, ds, zc, dy1, mn1, yr1, gdy, gmn, gyr, gLat)
+		lu = lct6700Result2.Lu
+		lct = lct6700Result2.Lct
+
+		if lct == -99.0 {
+			return lct
+		}
+
+		la = lu
+	}
+
+	x = LocalSiderealTimeToGreenwichSiderealTime(la, 0.0, 0.0, gLong)
+	ut = GreenwichSiderealTimeToUniversalTime(x, 0.0, 0.0, gdy, gmn, gyr)
+
+	if EGstUt(x, 0.0, 0.0, gdy, gmn, gyr) != patype.WarningFlag_OK {
+		if math.Abs(g1-ut) > 0.5 {
+			ut += 23.93447
+		}
+	}
+
+	ut = UtDayAdjust(ut, g1)
+	lct = UniversalTimeToLocalCivilTime(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+
+	return lct
+}
+
+/* Helper function for MoonRiseLCT */
+func MoonRiseLctL6680(x float64, ds int, zc int, gdy float64, gmn int, gyr int, g1 float64, ut float64) patype.MoonRiseLCTL6680 {
+	if EGstUt(x, 0.0, 0.0, gdy, gmn, gyr) != patype.WarningFlag_OK {
+		if math.Abs(g1-ut) > 0.5 {
+			ut += 23.93447
+		}
+	}
+
+	ut = UtDayAdjust(ut, g1)
+	var lct float64 = UniversalTimeToLocalCivilTime(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+	var dy1 float64 = UniversalTimeLocalCivilDay(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+	var mn1 int = UniversalTimeLocalCivilMonth(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+	var yr1 int = UniversalTimeLocalCivilYear(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+	gdy = LocalCivilTimeGreenwichDay(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1)
+	gmn = int(LocalCivilTimeGreenwichMonth(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1))
+	gyr = int(LocalCivilTimeGreenwichYear(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1))
+	ut -= 24.0 * math.Floor(ut/24.0)
+
+	return patype.MoonRiseLCTL6680{Ut: ut, Lct: lct, Dy1: dy1, Mn1: mn1, Yr1: yr1, Gdy: gdy, Gmn: gmn, Gyr: gyr}
+}
+
+/* Helper function for MoonRiseLCT */
+func MoonRiseLctL6700(lct float64, ds int, zc int, dy1 float64, mn1 int, yr1 int, gdy float64, gmn int, gyr int, gLat float64) patype.MoonRiseLCTL6700 {
+	var mm float64 = MoonLongitude(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1)
+	var bm float64 = MoonLatitude(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1)
+	var pm float64 = pautil.DegreesToRadians(MoonHorizontalParallax(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1))
+	var dp float64 = NutatLong(gdy, gmn, gyr)
+	var th float64 = 0.27249 * math.Sin(pm)
+	var di float64 = th + 0.0098902 - pm
+	var p float64 = DecimalDegreesToDegreeHours(EclipticRightAscension(mm+dp, 0.0, 0.0, bm, 0.0, 0.0, gdy, gmn, gyr))
+	var q float64 = EclipticDeclination(mm+dp, 0.0, 0.0, bm, 0.0, 0.0, gdy, gmn, gyr)
+	var lu float64 = RiseSetLocalSiderealTimeRise(p, 0.0, 0.0, q, 0.0, 0.0, Degrees(di), gLat)
+
+	if ERiseSet(p, 0.0, 0.0, q, 0.0, 0.0, Degrees(di), gLat) != patype.RiseSetStatus_OK {
+		lct = -99.0
+	}
+
+	return patype.MoonRiseLCTL6700{Mm: mm, Bm: bm, Pm: pm, Dp: dp, Th: th, Di: di, P: p, Q: q, Lu: lu, Lct: lct}
+}
+
+/*
+Local date of moonrise.
+
+Original macro names: MoonRiseLcDay, MoonRiseLcMonth, MoonRiseLcYear
+*/
+func MoonRiseLcDmy(dy float64, mn int, yr int, ds int, zc int, gLong float64, gLat float64) patype.FullDatePrecise {
+	var gdy float64 = LocalCivilTimeGreenwichDay(12.0, 0.0, 0.0, ds, zc, dy, mn, yr)
+	var gmn int = int(LocalCivilTimeGreenwichMonth(12.0, 0.0, 0.0, ds, zc, dy, mn, yr))
+	var gyr int = int(LocalCivilTimeGreenwichYear(12.0, 0.0, 0.0, ds, zc, dy, mn, yr))
+	var lct float64 = 12.0
+	var dy1 float64 = dy
+	var mn1 int = mn
+	var yr1 int = yr
+
+	var lct6700Result1 patype.MoonRiseLcDMYL6700 = MoonRiseLcDmyL6700(lct, ds, zc, dy1, mn1, yr1, gdy, gmn, gyr, gLat)
+	var lu float64 = lct6700Result1.Lu
+	lct = lct6700Result1.Lct
+
+	if lct == -99.0 {
+		return patype.FullDatePrecise{Month: -99, Day: -99, Year: -99}
+	}
+
+	var la float64 = lu
+
+	var x float64
+	var ut float64
+	var g1 float64 = 0.0
+	var gu float64 = 0.0
+	for k := 1; k < 9; k++ {
+		x = LocalSiderealTimeToGreenwichSiderealTime(la, 0.0, 0.0, gLong)
+		ut = GreenwichSiderealTimeToUniversalTime(x, 0.0, 0.0, gdy, gmn, gyr)
+
+		if k == 1 {
+			g1 = ut
+		} else {
+			g1 = gu
+		}
+
+		gu = ut
+		ut = gu
+
+		var lct6680Result1 patype.MoonRiseLcDMYL6680 = MoonRiseLcDmyL6680(x, ds, zc, gdy, gmn, gyr, g1, ut)
+		lct = lct6680Result1.Lct
+		dy1 = lct6680Result1.Dy1
+		mn1 = lct6680Result1.Mn1
+		yr1 = lct6680Result1.Yr1
+		gdy = lct6680Result1.Gdy
+		gmn = lct6680Result1.Gmn
+		gyr = lct6680Result1.Gyr
+
+		var lct6700Result2 patype.MoonRiseLcDMYL6700 = MoonRiseLcDmyL6700(lct, ds, zc, dy1, mn1, yr1, gdy, gmn, gyr, gLat)
+
+		lu = lct6700Result2.Lu
+		lct = lct6700Result2.Lct
+
+		if lct == -99.0 {
+			return patype.FullDatePrecise{Month: -99, Day: -99, Year: -99}
+		}
+
+		la = lu
+	}
+
+	x = LocalSiderealTimeToGreenwichSiderealTime(la, 0.0, 0.0, gLong)
+	ut = GreenwichSiderealTimeToUniversalTime(x, 0.0, 0.0, gdy, gmn, gyr)
+
+	if EGstUt(x, 0.0, 0.0, gdy, gmn, gyr) != patype.WarningFlag_OK {
+		if math.Abs(g1-ut) > 0.5 {
+			ut += 23.93447
+		}
+	}
+
+	ut = UtDayAdjust(ut, g1)
+	dy1 = UniversalTimeLocalCivilDay(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+	mn1 = UniversalTimeLocalCivilMonth(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+	yr1 = UniversalTimeLocalCivilYear(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+
+	return patype.FullDatePrecise{Month: mn1, Day: dy1, Year: yr1}
+}
+
+/* Helper function for MoonRiseLcDMY */
+func MoonRiseLcDmyL6680(x float64, ds int, zc int, gdy float64, gmn int, gyr int, g1 float64, ut float64) patype.MoonRiseLcDMYL6680 {
+	if EGstUt(x, 0.0, 0.0, gdy, gmn, gyr) != patype.WarningFlag_OK {
+		if math.Abs(g1-ut) > 0.5 {
+			ut += 23.93447
+		}
+	}
+
+	ut = UtDayAdjust(ut, g1)
+	var lct float64 = UniversalTimeToLocalCivilTime(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+	var dy1 float64 = UniversalTimeLocalCivilDay(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+	var mn1 int = UniversalTimeLocalCivilMonth(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+	var yr1 int = UniversalTimeLocalCivilYear(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+	gdy = LocalCivilTimeGreenwichDay(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1)
+	gmn = int(LocalCivilTimeGreenwichMonth(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1))
+	gyr = int(LocalCivilTimeGreenwichYear(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1))
+	ut -= 24.0 * math.Floor(ut/24.0)
+
+	return patype.MoonRiseLcDMYL6680{Ut: ut, Lct: lct, Dy1: dy1, Mn1: mn1, Yr1: yr1, Gdy: gdy, Gmn: gmn, Gyr: gyr}
+}
+
+/* Helper function for MoonRiseLcDMY */
+func MoonRiseLcDmyL6700(
+	lct float64, ds int, zc int, dy1 float64, mn1 int, yr1 int, gdy float64, gmn int, gyr int, gLat float64,
+) patype.MoonRiseLcDMYL6700 {
+	var mm float64 = MoonLongitude(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1)
+	var bm float64 = MoonLatitude(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1)
+	var pm float64 = pautil.DegreesToRadians(MoonHorizontalParallax(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1))
+	var dp float64 = NutatLong(gdy, gmn, gyr)
+	var th float64 = 0.27249 * math.Sin(pm)
+	var di float64 = th + 0.0098902 - pm
+	var p float64 = DecimalDegreesToDegreeHours(EclipticRightAscension(mm+dp, 0.0, 0.0, bm, 0.0, 0.0, gdy, gmn, gyr))
+	var q float64 = EclipticDeclination(mm+dp, 0.0, 0.0, bm, 0.0, 0.0, gdy, gmn, gyr)
+	var lu float64 = RiseSetLocalSiderealTimeRise(p, 0.0, 0.0, q, 0.0, 0.0, Degrees(di), gLat)
+
+	return patype.MoonRiseLcDMYL6700{Mm: mm, Bm: bm, Pm: pm, Dp: dp, Th: th, Di: di, P: p, Q: q, Lu: lu, Lct: lct}
+}
+
+/*
+Local azimuth of moonrise.
+
+Original macro name: MoonRiseAz
+*/
+func MoonRiseAz(dy float64, mn int, yr int, ds int, zc int, gLong float64, gLat float64) float64 {
+	var gdy float64 = LocalCivilTimeGreenwichDay(12.0, 0.0, 0.0, ds, zc, dy, mn, yr)
+	var gmn int = int(LocalCivilTimeGreenwichMonth(12.0, 0.0, 0.0, ds, zc, dy, mn, yr))
+	var gyr int = int(LocalCivilTimeGreenwichYear(12.0, 0.0, 0.0, ds, zc, dy, mn, yr))
+	var lct float64 = 12.0
+	var dy1 float64 = dy
+	var mn1 int = mn
+	var yr1 int = yr
+
+	var az6700Result1 patype.MoonRiseAzL6700 = MoonRiseAzL6700(lct, ds, zc, dy1, mn1, yr1, gdy, gmn, gyr, gLat)
+	var lu float64 = az6700Result1.Lu
+	lct = az6700Result1.Lct
+	var au float64
+
+	if lct == -99.0 {
+		return lct
+	}
+
+	var la float64 = lu
+
+	var x float64
+	var ut float64
+	var g1 float64
+	var gu float64 = 0.0
+	var aa float64 = 0.0
+	for k := 1; k < 9; k++ {
+		x = LocalSiderealTimeToGreenwichSiderealTime(la, 0.0, 0.0, gLong)
+		ut = GreenwichSiderealTimeToUniversalTime(x, 0.0, 0.0, gdy, gmn, gyr)
+
+		if k == 1 {
+			g1 = ut
+		} else {
+			g1 = gu
+		}
+
+		gu = ut
+		ut = gu
+
+		var az6680Result1 patype.MoonRiseAzL6680 = MoonRiseAzL6680(x, ds, zc, gdy, gmn, gyr, g1, ut)
+		lct = az6680Result1.Lct
+		dy1 = az6680Result1.Dy1
+		mn1 = az6680Result1.Mn1
+		yr1 = az6680Result1.Yr1
+		gdy = az6680Result1.Gdy
+		gmn = az6680Result1.Gmn
+		gyr = az6680Result1.Gyr
+
+		var az6700Result2 patype.MoonRiseAzL6700 = MoonRiseAzL6700(lct, ds, zc, dy1, mn1, yr1, gdy, gmn, gyr, gLat)
+		lu = az6700Result2.Lu
+		lct = az6700Result2.Lct
+		au = az6700Result2.Au
+
+		if lct == -99.0 {
+			return lct
+		}
+
+		la = lu
+		aa = au
+	}
+
+	au = aa
+
+	return au
+}
+
+/* Helper function for MoonRiseAz */
+func MoonRiseAzL6680(x float64, ds int, zc int, gdy float64, gmn int, gyr int, g1 float64, ut float64) patype.MoonRiseAzL6680 {
+	if EGstUt(x, 0.0, 0.0, gdy, gmn, gyr) != patype.WarningFlag_OK {
+		if math.Abs(g1-ut) > 0.5 {
+			ut += 23.93447
+		}
+	}
+
+	ut = UtDayAdjust(ut, g1)
+	var lct float64 = UniversalTimeToLocalCivilTime(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+	var dy1 float64 = UniversalTimeLocalCivilDay(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+	var mn1 int = UniversalTimeLocalCivilMonth(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+	var yr1 int = UniversalTimeLocalCivilYear(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+	gdy = LocalCivilTimeGreenwichDay(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1)
+	gmn = int(LocalCivilTimeGreenwichMonth(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1))
+	gyr = int(LocalCivilTimeGreenwichYear(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1))
+	ut -= 24.0 * math.Floor(ut/24.0)
+
+	return patype.MoonRiseAzL6680{Ut: ut, Lct: lct, Dy1: dy1, Mn1: mn1, Yr1: yr1, Gdy: gdy, Gmn: gmn, Gyr: gyr}
+}
+
+/* Helper function for MoonRiseAz */
+func MoonRiseAzL6700(lct float64, ds int, zc int, dy1 float64, mn1 int, yr1 int, gdy float64, gmn int, gyr int, gLat float64) patype.MoonRiseAzL6700 {
+	var mm float64 = MoonLongitude(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1)
+	var bm float64 = MoonLatitude(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1)
+	var pm float64 = pautil.DegreesToRadians(MoonHorizontalParallax(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1))
+	var dp float64 = NutatLong(gdy, gmn, gyr)
+	var th float64 = 0.27249 * math.Sin(pm)
+	var di float64 = th + 0.0098902 - pm
+	var p float64 = DecimalDegreesToDegreeHours(EclipticRightAscension(mm+dp, 0.0, 0.0, bm, 0.0, 0.0, gdy, gmn, gyr))
+	var q float64 = EclipticDeclination(mm+dp, 0.0, 0.0, bm, 0.0, 0.0, gdy, gmn, gyr)
+	var lu float64 = RiseSetLocalSiderealTimeRise(p, 0.0, 0.0, q, 0.0, 0.0, Degrees(di), gLat)
+	var au float64 = RiseSetAzimuthRise(p, 0.0, 0.0, q, 0.0, 0.0, Degrees(di), gLat)
+
+	return patype.MoonRiseAzL6700{Mm: mm, Bm: bm, Pm: pm, Dp: dp, Th: th, Di: di, P: p, Q: q, Lu: lu, Lct: lct, Au: au}
+}
+
+/*
+Local time of moonset.
+
+Original macro name: MoonSetLCT
+*/
+func MoonSetLct(dy float64, mn int, yr int, ds int, zc int, gLong float64, gLat float64) float64 {
+	var gdy float64 = LocalCivilTimeGreenwichDay(12.0, 0.0, 0.0, ds, zc, dy, mn, yr)
+	var gmn int = int(LocalCivilTimeGreenwichMonth(12.0, 0.0, 0.0, ds, zc, dy, mn, yr))
+	var gyr int = int(LocalCivilTimeGreenwichYear(12.0, 0.0, 0.0, ds, zc, dy, mn, yr))
+	var lct float64 = 12.0
+	var dy1 float64 = dy
+	var mn1 int = mn
+	var yr1 int = yr
+
+	var lct6700Result1 patype.MoonSetLCTL6700 = MoonSetLctL6700(lct, ds, zc, dy1, mn1, yr1, gdy, gmn, gyr, gLat)
+	var lu float64 = lct6700Result1.Lu
+	lct = lct6700Result1.Lct
+
+	if lct == -99.0 {
+		return lct
+	}
+
+	var la float64 = lu
+
+	var x float64
+	var ut float64
+	var g1 float64 = 0.0
+	var gu float64 = 0.0
+	for k := 1; k < 9; k++ {
+		x = LocalSiderealTimeToGreenwichSiderealTime(la, 0.0, 0.0, gLong)
+		ut = GreenwichSiderealTimeToUniversalTime(x, 0.0, 0.0, gdy, gmn, gyr)
+
+		if k == 1 {
+			g1 = ut
+		} else {
+			g1 = gu
+		}
+
+		gu = ut
+		ut = gu
+
+		var lct6680Result1 patype.MoonSetLCTL6680 = MoonSetLctL6680(x, ds, zc, gdy, gmn, gyr, g1, ut)
+		lct = lct6680Result1.Lct
+		dy1 = lct6680Result1.Dy1
+		mn1 = lct6680Result1.Mn1
+		yr1 = lct6680Result1.Yr1
+		gdy = lct6680Result1.Gdy
+		gmn = lct6680Result1.Gmn
+		gyr = lct6680Result1.Gyr
+
+		var lct6700Result2 patype.MoonSetLCTL6700 = MoonSetLctL6700(lct, ds, zc, dy1, mn1, yr1, gdy, gmn, gyr, gLat)
+		lu = lct6700Result2.Lu
+		lct = lct6700Result2.Lct
+
+		if lct == -99.0 {
+			return lct
+		}
+
+		la = lu
+	}
+
+	x = LocalSiderealTimeToGreenwichSiderealTime(la, 0.0, 0.0, gLong)
+	ut = GreenwichSiderealTimeToUniversalTime(x, 0.0, 0.0, gdy, gmn, gyr)
+
+	if EGstUt(x, 0.0, 0.0, gdy, gmn, gyr) != patype.WarningFlag_OK {
+		if math.Abs(g1-ut) > 0.5 {
+			ut += 23.93447
+		}
+	}
+
+	ut = UtDayAdjust(ut, g1)
+	lct = UniversalTimeToLocalCivilTime(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+
+	return lct
+}
+
+/* Helper function for MoonSetLCT */
+func MoonSetLctL6680(x float64, ds int, zc int, gdy float64, gmn int, gyr int, g1 float64, ut float64) patype.MoonSetLCTL6680 {
+	if EGstUt(x, 0.0, 0.0, gdy, gmn, gyr) != patype.WarningFlag_OK {
+		if math.Abs(g1-ut) > 0.5 {
+			ut += 23.93447
+		}
+	}
+
+	ut = UtDayAdjust(ut, g1)
+	var lct float64 = UniversalTimeToLocalCivilTime(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+	var dy1 float64 = UniversalTimeLocalCivilDay(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+	var mn1 int = UniversalTimeLocalCivilMonth(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+	var yr1 int = UniversalTimeLocalCivilYear(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+	gdy = LocalCivilTimeGreenwichDay(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1)
+	gmn = int(LocalCivilTimeGreenwichMonth(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1))
+	gyr = int(LocalCivilTimeGreenwichYear(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1))
+	ut -= 24.0 * math.Floor(ut/24.0)
+
+	return patype.MoonSetLCTL6680{Ut: ut, Lct: lct, Dy1: dy1, Mn1: mn1, Yr1: yr1, Gdy: gdy, Gmn: gmn, Gyr: gyr}
+}
+
+/* Helper function for MoonSetLCT */
+func MoonSetLctL6700(lct float64, ds int, zc int, dy1 float64, mn1 int, yr1 int, gdy float64, gmn int, gyr int, gLat float64) patype.MoonSetLCTL6700 {
+	var mm float64 = MoonLongitude(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1)
+	var bm float64 = MoonLatitude(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1)
+	var pm float64 = pautil.DegreesToRadians(MoonHorizontalParallax(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1))
+	var dp float64 = NutatLong(gdy, gmn, gyr)
+	var th float64 = 0.27249 * math.Sin(pm)
+	var di float64 = th + 0.0098902 - pm
+	var p float64 = DecimalDegreesToDegreeHours(EclipticRightAscension(mm+dp, 0.0, 0.0, bm, 0.0, 0.0, gdy, gmn, gyr))
+	var q float64 = EclipticDeclination(mm+dp, 0.0, 0.0, bm, 0.0, 0.0, gdy, gmn, gyr)
+	var lu float64 = RiseSetLocalSiderealTimeSet(p, 0.0, 0.0, q, 0.0, 0.0, Degrees(di), gLat)
+
+	if ERiseSet(p, 0.0, 0.0, q, 0.0, 0.0, Degrees(di), gLat) != patype.RiseSetStatus_OK {
+		lct = -99.0
+	}
+
+	return patype.MoonSetLCTL6700{Mm: mm, Bm: bm, Pm: pm, Dp: dp, Th: th, Di: di, P: p, Q: q, Lu: lu, Lct: lct}
+}
+
+/*
+Local date of moonset.
+
+Original macro names: MoonSetLcDay, MoonSetLcMonth, MoonSetLcYear
+*/
+func MoonSetLcDmy(dy float64, mn int, yr int, ds int, zc int, gLong float64, gLat float64) patype.FullDatePrecise {
+	var gdy float64 = LocalCivilTimeGreenwichDay(12.0, 0.0, 0.0, ds, zc, dy, mn, yr)
+	var gmn int = int(LocalCivilTimeGreenwichMonth(12.0, 0.0, 0.0, ds, zc, dy, mn, yr))
+	var gyr int = int(LocalCivilTimeGreenwichYear(12.0, 0.0, 0.0, ds, zc, dy, mn, yr))
+	var lct float64 = 12.0
+	var dy1 float64 = dy
+	var mn1 int = mn
+	var yr1 int = yr
+
+	var dmy6700_result1 patype.MoonSetLcDMYL6700 = MoonSetLcDmyL6700(lct, ds, zc, dy1, mn1, yr1, gdy, gmn, gyr, gLat)
+	var lu float64 = dmy6700_result1.Lu
+	lct = dmy6700_result1.Lct
+
+	if lct == -99.0 {
+		return patype.FullDatePrecise{Month: int(lct), Day: lct, Year: int(lct)}
+	}
+
+	var la float64 = lu
+
+	var x float64
+	var ut float64
+	var g1 float64 = 0.0
+	var gu float64 = 0.0
+	for k := 1; k < 9; k++ {
+		x = LocalSiderealTimeToGreenwichSiderealTime(la, 0.0, 0.0, gLong)
+		ut = GreenwichSiderealTimeToUniversalTime(x, 0.0, 0.0, gdy, gmn, gyr)
+
+		if k == 1 {
+			g1 = ut
+		} else {
+			g1 = gu
+		}
+
+		gu = ut
+		ut = gu
+
+		var dmy6680_result1 patype.MoonSetLcDMYL6680 = MoonSetLcDmyL6680(x, ds, zc, gdy, gmn, gyr, g1, ut)
+		lct = dmy6680_result1.Lct
+		dy1 = dmy6680_result1.Dy1
+		mn1 = dmy6680_result1.Mn1
+		yr1 = dmy6680_result1.Yr1
+		gdy = dmy6680_result1.Gdy
+		gmn = dmy6680_result1.Gmn
+		gyr = dmy6680_result1.Gyr
+
+		var dmy6700_result2 patype.MoonSetLcDMYL6700 = MoonSetLcDmyL6700(lct, ds, zc, dy1, mn1, yr1, gdy, gmn, gyr, gLat)
+		lu = dmy6700_result2.Lu
+		lct = dmy6700_result2.Lct
+
+		if lct == -99.0 {
+			return patype.FullDatePrecise{Month: int(lct), Day: lct, Year: int(lct)}
+		}
+
+		la = lu
+	}
+
+	x = LocalSiderealTimeToGreenwichSiderealTime(la, 0.0, 0.0, gLong)
+	ut = GreenwichSiderealTimeToUniversalTime(x, 0.0, 0.0, gdy, gmn, gyr)
+
+	if EGstUt(x, 0.0, 0.0, gdy, gmn, gyr) != patype.WarningFlag_OK {
+		if math.Abs(g1-ut) > 0.5 {
+			ut += 23.93447
+		}
+	}
+
+	ut = UtDayAdjust(ut, g1)
+	dy1 = UniversalTimeLocalCivilDay(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+	mn1 = UniversalTimeLocalCivilMonth(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+	yr1 = UniversalTimeLocalCivilYear(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+
+	return patype.FullDatePrecise{Month: mn1, Day: dy1, Year: yr1}
+}
+
+/* Helper function for MoonSetLcDMY */
+func MoonSetLcDmyL6680(x float64, ds int, zc int, gdy float64, gmn int, gyr int, g1 float64, ut float64) patype.MoonSetLcDMYL6680 {
+	if EGstUt(x, 0.0, 0.0, gdy, gmn, gyr) != patype.WarningFlag_OK {
+		if math.Abs(g1-ut) > 0.5 {
+			ut += 23.93447
+		}
+	}
+
+	ut = UtDayAdjust(ut, g1)
+	var lct float64 = UniversalTimeToLocalCivilTime(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+	var dy1 float64 = UniversalTimeLocalCivilDay(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+	var mn1 int = UniversalTimeLocalCivilMonth(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+	var yr1 int = UniversalTimeLocalCivilYear(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+	gdy = LocalCivilTimeGreenwichDay(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1)
+	gmn = int(LocalCivilTimeGreenwichMonth(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1))
+	gyr = int(LocalCivilTimeGreenwichYear(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1))
+	ut -= 24.0 * math.Floor(ut/24.0)
+
+	return patype.MoonRiseLcDMYL6680{Ut: ut, Lct: lct, Dy1: dy1, Mn1: mn1, Yr1: yr1, Gdy: gdy, Gmn: gmn, Gyr: gyr}
+}
+
+/* Helper function for MoonSetLcDMY */
+func MoonSetLcDmyL6700(lct float64, ds int, zc int, dy1 float64, mn1 int, yr1 int, gdy float64, gmn int, gyr int, gLat float64) patype.MoonSetLcDMYL6700 {
+	var mm float64 = MoonLongitude(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1)
+	var bm float64 = MoonLatitude(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1)
+	var pm float64 = pautil.DegreesToRadians(MoonHorizontalParallax(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1))
+	var dp float64 = NutatLong(gdy, gmn, gyr)
+	var th float64 = 0.27249 * math.Sin(pm)
+	var di float64 = th + 0.0098902 - pm
+	var p float64 = DecimalDegreesToDegreeHours(EclipticRightAscension(mm+dp, 0.0, 0.0, bm, 0.0, 0.0, gdy, gmn, gyr))
+	var q float64 = EclipticDeclination(mm+dp, 0.0, 0.0, bm, 0.0, 0.0, gdy, gmn, gyr)
+	var lu float64 = RiseSetLocalSiderealTimeSet(p, 0.0, 0.0, q, 0.0, 0.0, Degrees(di), gLat)
+
+	return patype.MoonSetLcDMYL6700{Mm: mm, Bm: bm, Pm: pm, Dp: dp, Th: th, Di: di, P: p, Q: q, Lu: lu, Lct: lct}
+}
+
+/*
+Local azimuth of moonset.
+
+Original macro name: MoonSetAz
+*/
+func MoonSetAz(dy float64, mn int, yr int, ds int, zc int, gLong float64, gLat float64) float64 {
+	var gdy float64 = LocalCivilTimeGreenwichDay(12.0, 0.0, 0.0, ds, zc, dy, mn, yr)
+	var gmn int = int(LocalCivilTimeGreenwichMonth(12.0, 0.0, 0.0, ds, zc, dy, mn, yr))
+	var gyr int = int(LocalCivilTimeGreenwichYear(12.0, 0.0, 0.0, ds, zc, dy, mn, yr))
+	var lct float64 = 12.0
+	var dy1 float64 = dy
+	var mn1 int = mn
+	var yr1 int = yr
+
+	var az6700Result1 patype.MoonSetAzL6700 = MoonSetAzL6700(lct, ds, zc, dy1, mn1, yr1, gdy, gmn, gyr, gLat)
+	var lu float64 = az6700Result1.Lu
+	lct = az6700Result1.Lct
+
+	var au float64
+
+	if lct == -99.0 {
+		return lct
+	}
+
+	var la float64 = lu
+
+	var x float64
+	var ut float64
+	var g1 float64
+	var gu float64 = 0.0
+	var aa float64 = 0.0
+	for k := 1; k < 9; k++ {
+		x = LocalSiderealTimeToGreenwichSiderealTime(la, 0.0, 0.0, gLong)
+		ut = GreenwichSiderealTimeToUniversalTime(x, 0.0, 0.0, gdy, gmn, gyr)
+
+		if k == 1 {
+			g1 = ut
+		} else {
+			g1 = gu
+		}
+
+		gu = ut
+		ut = gu
+
+		var az6680Result1 patype.MoonSetAzL6680 = MoonSetAzL6680(x, ds, zc, gdy, gmn, gyr, g1, ut)
+		lct = az6680Result1.Lct
+		dy1 = az6680Result1.Dy1
+		mn1 = az6680Result1.Mn1
+		yr1 = az6680Result1.Yr1
+		gdy = az6680Result1.Gdy
+		gmn = az6680Result1.Gmn
+		gyr = az6680Result1.Gyr
+
+		var az6700Result2 patype.MoonSetAzL6700 = MoonSetAzL6700(lct, ds, zc, dy1, mn1, yr1, gdy, gmn, gyr, gLat)
+		lu = az6700Result2.Lu
+		lct = az6700Result2.Lct
+		au = az6700Result2.Au
+
+		if lct == -99.0 {
+			return lct
+		}
+
+		la = lu
+		aa = au
+	}
+
+	au = aa
+
+	return au
+}
+
+/* Helper function for MoonSetAz */
+func MoonSetAzL6680(x float64, ds int, zc int, gdy float64, gmn int, gyr int, g1 float64, ut float64) patype.MoonSetAzL6680 {
+	if EGstUt(x, 0.0, 0.0, gdy, gmn, gyr) != patype.WarningFlag_OK {
+		if math.Abs(g1-ut) > 0.5 {
+			ut += 23.93447
+		}
+	}
+
+	ut = UtDayAdjust(ut, g1)
+	var lct float64 = UniversalTimeToLocalCivilTime(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+	var dy1 float64 = UniversalTimeLocalCivilDay(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+	var mn1 int = UniversalTimeLocalCivilMonth(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+	var yr1 int = UniversalTimeLocalCivilYear(ut, 0.0, 0.0, ds, zc, gdy, gmn, gyr)
+	gdy = LocalCivilTimeGreenwichDay(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1)
+	gmn = int(LocalCivilTimeGreenwichMonth(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1))
+	gyr = int(LocalCivilTimeGreenwichYear(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1))
+	ut -= 24.0 * math.Floor(ut/24.0)
+
+	return patype.MoonSetAzL6680{Ut: ut, Lct: lct, Dy1: dy1, Mn1: mn1, Yr1: yr1, Gdy: gdy, Gmn: gmn, Gyr: gyr}
+}
+
+/* Helper function for MoonSetAz */
+func MoonSetAzL6700(lct float64, ds int, zc int, dy1 float64, mn1 int, yr1 int, gdy float64, gmn int, gyr int, gLat float64) patype.MoonSetAzL6700 {
+	var mm float64 = MoonLongitude(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1)
+	var bm float64 = MoonLatitude(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1)
+	var pm float64 = pautil.DegreesToRadians(MoonHorizontalParallax(lct, 0.0, 0.0, ds, zc, dy1, mn1, yr1))
+	var dp float64 = NutatLong(gdy, gmn, gyr)
+	var th float64 = 0.27249 * math.Sin(pm)
+	var di float64 = th + 0.0098902 - pm
+	var p float64 = DecimalDegreesToDegreeHours(EclipticRightAscension(mm+dp, 0.0, 0.0, bm, 0.0, 0.0, gdy, gmn, gyr))
+	var q float64 = EclipticDeclination(mm+dp, 0.0, 0.0, bm, 0.0, 0.0, gdy, gmn, gyr)
+	var lu float64 = RiseSetLocalSiderealTimeSet(p, 0.0, 0.0, q, 0.0, 0.0, Degrees(di), gLat)
+	var au float64 = RiseSetAzimuthSet(p, 0.0, 0.0, q, 0.0, 0.0, Degrees(di), gLat)
+
+	return patype.MoonSetAzL6700{Mm: mm, Bm: bm, Pm: pm, Dp: dp, Th: th, Di: di, P: p, Q: q, Lu: lu, Lct: lct, Au: au}
+}
+
+/* Original macro name: UTDayAdjust */
+func UtDayAdjust(ut float64, g1 float64) float64 {
+	var returnValue float64 = ut
+
+	if (ut - g1) < -6.0 {
+		returnValue = ut + 24.0
+	}
+
+	if (ut - g1) > 6.0 {
+		returnValue = ut - 24.0
+	}
+
+	return returnValue
 }
