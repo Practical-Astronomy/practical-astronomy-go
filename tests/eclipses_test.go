@@ -32,3 +32,24 @@ func TestLunarEclipseCircumstances(t *testing.T) {
 
 	require.Equal(t, expectedLunarEclipseCircumstances, actualLunarEclipseCircumstances, "Mismatched Lunar Eclipse Circumstances")
 }
+
+func TestSolarEclipseOccurrence(t *testing.T) {
+	var expectedSolarEclipseOccurrence patype.SolarEclipseOccurrence = patype.SolarEclipseOccurrence{
+		Status: patype.SolarEclipseStatus_Certain, EventDateDay: 20, EventDateMonth: 3, EventDateYear: 2015}
+	var actualSolarEclipseOccurrence patype.SolarEclipseOccurrence = palib.SolarEclipseOccurrence(1, 4, 2015, false, 0)
+
+	require.Equal(t, expectedSolarEclipseOccurrence, actualSolarEclipseOccurrence, "Mismatched Solar Eclipse Occurrence")
+}
+
+func TestSolarEclipseCircumstances(t *testing.T) {
+	var expectedSolarEclipseCircumstances patype.SolarEclipseCircumstances = patype.SolarEclipseCircumstances{
+		CertainDateDay: 20, CertainDateMonth: 3, CertainDateYear: 2015,
+		UtFirstContactHour: 8, UtFirstContactMinutes: 55,
+		UtMidEclipseHour: 9, UtMidEclipseMinutes: 57,
+		UtLastContactHour: 10, UtLastContactMinutes: 58,
+		EclipseMagnitude: 1.016,
+	}
+	var actualSolarEclipseCircumstances patype.SolarEclipseCircumstances = palib.SolarEclipseCircumstances(20, 3, 2015, false, 0, 0, 68.65)
+
+	require.Equal(t, expectedSolarEclipseCircumstances, actualSolarEclipseCircumstances, "Mismatched Solar Eclipse Circumstances")
+}

@@ -604,3 +604,546 @@ func ESunRiseSet_L3710(gd float64, gm int, gy int, sr float64, di float64, gp fl
 
 	return patype.SunriseLctHelper{A: a, X: x, Y: y, La: la, S: s}
 }
+
+/*
+Determine if a solar eclipse is likely to occur.
+
+Original macro name: SEOccurrence
+*/
+func SolarEclipseOccurrence(ds int, zc int, dy float64, mn int, yr int) patype.SolarEclipseStatus {
+	var d0 float64 = LocalCivilTimeGreenwichDay(12.0, 0.0, 0.0, ds, zc, dy, mn, yr)
+	var m0 int = int(LocalCivilTimeGreenwichMonth(12.0, 0.0, 0.0, ds, zc, dy, mn, yr))
+	var y0 int = int(LocalCivilTimeGreenwichYear(12.0, 0.0, 0.0, ds, zc, dy, mn, yr))
+
+	var j0 float64 = CivilDateToJulianDate(0.0, 1, float64(y0))
+	var dj float64 = CivilDateToJulianDate(d0, float64(m0), float64(y0))
+	var k float64 = (float64(y0) - 1900.0 + ((dj - j0) * 1.0 / 365.0)) * 12.3685
+	k = Lint(k + 0.5)
+	var tn float64 = k / 1236.85
+	var tf float64 = (k + 0.5) / 1236.85
+	var t float64 = tn
+	var l6855Result1 patype.SolarEclipseOccurrence_L6855 = SolarEclipseOccurrenceL6855(t, k)
+	var nb float64 = l6855Result1.F
+	t = tf
+	k += 0.5
+	// var l6855Result2 patype.SolarEclipseOccurrence_L6855 = SolarEclipseOccurrenceL6855(t, k) // not used
+
+	var df float64 = math.Abs(nb - 3.141592654*Lint(nb/3.141592654))
+
+	if df > 0.37 {
+		df = 3.141592654 - df
+	}
+
+	var s patype.SolarEclipseStatus = patype.SolarEclipseStatus_Certain
+
+	if df >= 0.242600766 {
+		s = patype.SolarEclipseStatus_Possible
+		if df > 0.37 {
+			s = patype.SolarEclipseStatus_None
+		}
+	}
+
+	return s
+}
+
+/* Helper function for SolarEclipseOccurrence */
+func SolarEclipseOccurrenceL6855(t float64, k float64) patype.SolarEclipseOccurrence_L6855 {
+	var t2 float64 = t * t
+	var e float64 = 29.53 * k
+	var c float64 = 166.56 + (132.87-0.009173*t)*t
+	c = pautil.DegreesToRadians(c)
+	var b float64 = 0.00058868*k + (0.0001178-0.000000155*t)*t2
+	b = b + 0.00033*math.Sin(c) + 0.75933
+	var a float64 = k / 12.36886
+	var a1 float64 = 359.2242 + 360.0*FPart(a) - (0.0000333+0.00000347*t)*t2
+	var a2 float64 = 306.0253 + 360.0*FPart(k/0.9330851)
+	a2 += (0.0107306 + 0.00001236*t) * t2
+	a = k / 0.9214926
+	var f float64 = 21.2964 + 360.0*FPart(a) - (0.0016528+0.00000239*t)*t2
+	a1 = UnwindDeg(a1)
+	a2 = UnwindDeg(a2)
+	f = UnwindDeg(f)
+	a1 = pautil.DegreesToRadians(a1)
+	a2 = pautil.DegreesToRadians(a2)
+	f = pautil.DegreesToRadians(f)
+
+	var dd float64 = (0.1734-0.000393*t)*math.Sin(a1) + 0.0021*math.Sin(2.0*a1)
+	dd = dd - 0.4068*math.Sin(a2) + 0.0161*math.Sin(2.0*a2) - 0.0004*math.Sin(3.0*a2)
+	dd = dd + 0.0104*math.Sin(2.0*f) - 0.0051*math.Sin(a1+a2)
+	dd = dd - 0.0074*math.Sin(a1-a2) + 0.0004*math.Sin(2.0*f+a1)
+	dd = dd - 0.0004*math.Sin(2.0*f-a1) - 0.0006*math.Sin(2.0*f+a2) + 0.001*math.Sin(2.0*f-a2)
+	dd += 0.0005 * math.Sin(a1+2.0*a2)
+	var e1 float64 = math.Floor(e)
+	b = b + dd + (e - e1)
+	var b1 float64 = math.Floor(b)
+	a = e1 + b1
+	b -= b1
+
+	return patype.SolarEclipseOccurrence_L6855{F: f, Dd: dd, E1: e1, B1: b1, A: a, B: b}
+}
+
+/*
+Calculate time of maximum shadow for solar eclipse (UT)
+
+Original macro name: UTMaxSolarEclipse
+*/
+func UtMaxSolarEclipse(dy float64, mn int, yr int, ds int, zc int, glong float64, glat float64) float64 {
+	var tp float64 = 2.0 * math.Pi
+
+	if SolarEclipseOccurrence(ds, zc, dy, mn, yr) == patype.SolarEclipseStatus_None {
+		return -99.0
+	}
+
+	var dj float64 = NewMoon(ds, zc, dy, mn, yr)
+	var gday float64 = JulianDateDay(dj)
+	var gmonth int = JulianDateMonth(dj)
+	var gyear int = JulianDateYear(dj)
+	var igday float64 = math.Floor(gday)
+	var xi float64 = gday - igday
+	var utnm float64 = xi * 24.0
+	var ut float64 = utnm - 1.0
+	var ly float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var my float64 = pautil.DegreesToRadians(MoonLongitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var by float64 = pautil.DegreesToRadians(MoonLatitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var hy float64 = pautil.DegreesToRadians(MoonHorizontalParallax(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	ut = utnm + 1.0
+	var sb float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear)) - ly
+	var mz float64 = pautil.DegreesToRadians(MoonLongitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var bz float64 = pautil.DegreesToRadians(MoonLatitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var hz float64 = pautil.DegreesToRadians(MoonHorizontalParallax(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+
+	if sb < 0.0 {
+		sb += tp
+	}
+
+	var xh float64 = utnm
+	var x float64 = my
+	var y float64 = by
+	var tm float64 = xh - 1.0
+	var hp float64 = hy
+	var l7390result1 patype.UtMaxSolarEclipseL7390 = UtMaxSolarEclipse_L7390(x, y, igday, gmonth, gyear, tm, glong, glat, hp)
+	my = l7390result1.P
+	by = l7390result1.Q
+	x = mz
+	y = bz
+	tm = xh + 1.0
+	hp = hz
+	var l7390result2 patype.UtMaxSolarEclipseL7390 = UtMaxSolarEclipse_L7390(x, y, igday, gmonth, gyear, tm, glong, glat, hp)
+	mz = l7390result2.P
+	bz = l7390result2.Q
+
+	var x0 float64 = xh + 1.0 - (2.0 * bz / (bz - by))
+	var dm float64 = mz - my
+
+	if dm < 0.0 {
+		dm += tp
+	}
+
+	var lj float64 = (dm - sb) / 2.0
+	var mr float64 = my + (dm * (x0 - xh + 1.0) / 2.0)
+	ut = x0 - 0.13851852
+	var rr float64 = SunDist(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear)
+	var sr float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	sr += pautil.DegreesToRadians(NutatLong(igday, gmonth, gyear) - 0.00569)
+	x = sr
+	y = 0.0
+	tm = ut
+	hp = 0.00004263452 / rr
+	var l7390result3 patype.UtMaxSolarEclipseL7390 = UtMaxSolarEclipse_L7390(x, y, igday, gmonth, gyear, tm, glong, glat, hp)
+	sr = l7390result3.P
+	by -= l7390result3.Q
+	bz -= l7390result3.Q
+	// var p3 float64 = 0.00004263  // not used
+	var zh float64 = (sr - mr) / lj
+	var tc float64 = x0 + zh
+	var sh float64 = (((bz - by) * (tc - xh - 1.0) / 2.0) + bz) / lj
+	var s2 float64 = sh * sh
+	var z2 float64 = zh * zh
+	// var ps float64 = p3 / (rr * lj)  // not used
+	var z1 float64 = (zh * z2 / (z2 + s2)) + x0
+	var h0 float64 = (hy + hz) / (2.0 * lj)
+	var rm float64 = 0.272446 * h0
+	var rn float64 = 0.00465242 / (lj * rr)
+	// var hd float64 = h0 * 0.99834  // not used
+	// var _ru float64 = (hd - rn + ps) * 1.02  // not used
+	// var _rp float64 = (hd + rn + ps) * 1.02  // not used
+	// var pj float64 = math.Abs(sh * zh / math.Sqrt(s2+z2))  // not used
+	var r float64 = rm + rn
+	var dd float64 = z1 - x0
+	dd = dd*dd - ((z2 - (r * r)) * dd / zh)
+
+	if dd < 0.0 {
+		return -99.0
+	}
+
+	// var zd float64 = math.Sqrt(dd)  // not used
+
+	return z1
+}
+
+/* Helper function for ut_max_solar_eclipse */
+func UtMaxSolarEclipse_L7390(x float64, y float64, igday float64, gmonth int, gyear int, tm float64, glong float64, glat float64, hp float64) patype.UtMaxSolarEclipseL7390 {
+	var paa float64 = EclipticRightAscension(Degrees(x), 0.0, 0.0, Degrees(y), 0.0, 0.0, igday, gmonth, gyear)
+	var qaa float64 = EclipticDeclination(Degrees(x), 0.0, 0.0, Degrees(y), 0.0, 0.0, igday, gmonth, gyear)
+	var xaa float64 = RightAscensionToHourAngle(DecimalDegreesToDegreeHours(paa), 0.0, 0.0, tm, 0.0, 0.0, 0, 0, igday, gmonth, gyear, glong)
+	var pbb float64 = ParallaxHa(xaa, 0.0, 0.0, qaa, 0.0, 0.0, patype.CoordinateType_Actual, glat, 0.0, Degrees(hp))
+	var qbb float64 = ParallaxDec(xaa, 0.0, 0.0, qaa, 0.0, 0.0, patype.CoordinateType_Actual, glat, 0.0, Degrees(hp))
+	var xbb float64 = HourAngleToRightAscension(pbb, 0.0, 0.0, tm, 0.0, 0.0, 0, 0, igday, gmonth, gyear, glong)
+	var p float64 = pautil.DegreesToRadians(EqeLong(xbb, 0.0, 0.0, qbb, 0.0, 0.0, igday, gmonth, gyear))
+	var q float64 = pautil.DegreesToRadians(EqeLat(xbb, 0.0, 0.0, qbb, 0.0, 0.0, igday, gmonth, gyear))
+
+	return patype.UtMaxSolarEclipseL7390{Paa: paa, Qaa: qaa, Xaa: xaa, Pbb: pbb, Qbb: qbb, Xbb: xbb, P: p, Q: q}
+}
+
+/*
+Calculate time of first contact for solar eclipse (UT)
+
+Original macro name: UTFirstContactSolarEclipse
+*/
+func UtFirstContactSolarEclipse(dy float64, mn int, yr int, ds int, zc int, glong float64, glat float64) float64 {
+	var tp float64 = 2.0 * math.Pi
+
+	if SolarEclipseOccurrence(ds, zc, dy, mn, yr) == patype.SolarEclipseStatus_None {
+		return -99.0
+	}
+
+	var dj float64 = NewMoon(ds, zc, dy, mn, yr)
+	var gday float64 = JulianDateDay(dj)
+	var gmonth int = JulianDateMonth(dj)
+	var gyear int = JulianDateYear(dj)
+	var igday float64 = math.Floor(gday)
+	var xi float64 = gday - igday
+	var utnm float64 = xi * 24.0
+	var ut float64 = utnm - 1.0
+	var ly float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var my float64 = pautil.DegreesToRadians(MoonLongitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var by float64 = pautil.DegreesToRadians(MoonLatitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var hy float64 = pautil.DegreesToRadians(MoonHorizontalParallax(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	ut = utnm + 1.0
+	var sb float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear)) - ly
+	var mz float64 = pautil.DegreesToRadians(MoonLongitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var bz float64 = pautil.DegreesToRadians(MoonLatitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var hz float64 = pautil.DegreesToRadians(MoonHorizontalParallax(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+
+	if sb < 0.0 {
+		sb += tp
+	}
+
+	var xh float64 = utnm
+	var x float64 = my
+	var y float64 = by
+	var tm float64 = xh - 1.0
+	var hp float64 = hy
+	var l7390result1 patype.UtFirstContactSolarEclipseL7390 = UtFirstContactSolarEclipse_L7390(x, y, igday, gmonth, gyear, tm, glong, glat, hp)
+	my = l7390result1.P
+	by = l7390result1.Q
+	x = mz
+	y = bz
+	tm = xh + 1.0
+	hp = hz
+	var l7390result2 patype.UtFirstContactSolarEclipseL7390 = UtFirstContactSolarEclipse_L7390(x, y, igday, gmonth, gyear, tm, glong, glat, hp)
+	mz = l7390result2.P
+	bz = l7390result2.Q
+
+	var x0 float64 = xh + 1.0 - (2.0 * bz / (bz - by))
+	var dm float64 = mz - my
+
+	if dm < 0.0 {
+		dm += tp
+	}
+
+	var lj float64 = (dm - sb) / 2.0
+	var mr float64 = my + (dm * (x0 - xh + 1.0) / 2.0)
+	ut = x0 - 0.13851852
+	var rr float64 = SunDist(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear)
+	var sr float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	sr += pautil.DegreesToRadians(NutatLong(igday, gmonth, gyear) - 0.00569)
+	x = sr
+	y = 0.0
+	tm = ut
+	hp = 0.00004263452 / rr
+	var l7390result3 patype.UtFirstContactSolarEclipseL7390 = UtFirstContactSolarEclipse_L7390(x, y, igday, gmonth, gyear, tm, glong, glat, hp)
+	sr = l7390result3.P
+	by -= l7390result3.Q
+	bz -= l7390result3.Q
+	// var p3 float64 = 0.00004263 // not used
+	var zh float64 = (sr - mr) / lj
+	var tc float64 = x0 + zh
+	var sh float64 = (((bz - by) * (tc - xh - 1.0) / 2.0) + bz) / lj
+	var s2 float64 = sh * sh
+	var z2 float64 = zh * zh
+	// var ps float64 = p3 / (rr * lj) // not used
+	var z1 float64 = (zh * z2 / (z2 + s2)) + x0
+	var h0 float64 = (hy + hz) / (2.0 * lj)
+	var rm float64 = 0.272446 * h0
+	var rn float64 = 0.00465242 / (lj * rr)
+	// var hd float64 = h0 * 0.99834  // not used
+	// var _ru float64 = (hd - rn + ps) * 1.02  // not used
+	// var _rp float64 = (hd + rn + ps) * 1.02  // not used
+	// var pj float64 = math.Abs(sh * zh / math.Sqrt(s2+z2))  // not used
+	var r float64 = rm + rn
+	var dd float64 = z1 - x0
+	dd = dd*dd - ((z2 - (r * r)) * dd / zh)
+
+	if dd < 0.0 {
+		return -99.0
+	}
+
+	var zd float64 = math.Sqrt(dd)
+	var z6 float64 = z1 - zd
+
+	if z6 < 0.0 {
+		z6 += 24.0
+	}
+
+	return z6
+}
+
+/* Helper function for UTFirstContactSolarEclipse */
+func UtFirstContactSolarEclipse_L7390(
+	x float64, y float64, igday float64, gmonth int, gyear int, tm float64, glong float64, glat float64, hp float64,
+) patype.UtFirstContactSolarEclipseL7390 {
+	var paa float64 = EclipticRightAscension(Degrees(x), 0.0, 0.0, Degrees(y), 0.0, 0.0, igday, gmonth, gyear)
+	var qaa float64 = EclipticDeclination(Degrees(x), 0.0, 0.0, Degrees(y), 0.0, 0.0, igday, gmonth, gyear)
+	var xaa float64 = RightAscensionToHourAngle(DecimalDegreesToDegreeHours(paa), 0.0, 0.0, tm, 0.0, 0.0, 0, 0, igday, gmonth, gyear, glong)
+	var pbb float64 = ParallaxHa(xaa, 0.0, 0.0, qaa, 0.0, 0.0, patype.CoordinateType_Actual, glat, 0.0, Degrees(hp))
+	var qbb float64 = ParallaxDec(xaa, 0.0, 0.0, qaa, 0.0, 0.0, patype.CoordinateType_Actual, glat, 0.0, Degrees(hp))
+	var xbb float64 = HourAngleToRightAscension(pbb, 0.0, 0.0, tm, 0.0, 0.0, 0, 0, igday, gmonth, gyear, glong)
+	var p float64 = pautil.DegreesToRadians(EqeLong(xbb, 0.0, 0.0, qbb, 0.0, 0.0, igday, gmonth, gyear))
+	var q float64 = pautil.DegreesToRadians(EqeLat(xbb, 0.0, 0.0, qbb, 0.0, 0.0, igday, gmonth, gyear))
+
+	return patype.UtFirstContactSolarEclipseL7390{Paa: paa, Qaa: qaa, Xaa: xaa, Pbb: pbb, Qbb: qbb, Xbb: xbb, P: p, Q: q}
+}
+
+/*
+Calculate time of last contact for solar eclipse (UT)
+
+Original macro name: UTLastContactSolarEclipse
+*/
+func UtLastContactSolarEclipse(dy float64, mn int, yr int, ds int, zc int, glong float64, glat float64) float64 {
+	var tp float64 = 2.0 * math.Pi
+
+	if SolarEclipseOccurrence(ds, zc, dy, mn, yr) == patype.SolarEclipseStatus_None {
+		return -99.0
+	}
+
+	var dj float64 = NewMoon(ds, zc, dy, mn, yr)
+	var gday float64 = JulianDateDay(dj)
+	var gmonth int = JulianDateMonth(dj)
+	var gyear int = JulianDateYear(dj)
+	var igday float64 = math.Floor(gday)
+	var xi float64 = gday - igday
+	var utnm float64 = xi * 24.0
+	var ut float64 = utnm - 1.0
+	var ly float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var my float64 = pautil.DegreesToRadians(MoonLongitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var by float64 = pautil.DegreesToRadians(MoonLatitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var hy float64 = pautil.DegreesToRadians(MoonHorizontalParallax(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	ut = utnm + 1.0
+	var sb float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear)) - ly
+	var mz float64 = pautil.DegreesToRadians(MoonLongitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var bz float64 = pautil.DegreesToRadians(MoonLatitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var hz float64 = pautil.DegreesToRadians(MoonHorizontalParallax(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+
+	if sb < 0.0 {
+		sb += tp
+	}
+
+	var xh float64 = utnm
+	var x float64 = my
+	var y float64 = by
+	var tm float64 = xh - 1.0
+	var hp float64 = hy
+	var l7390result1 patype.UtLastContactSolarEclipseL7390 = UtLastContactSolarEclipse_L7390(x, y, igday, gmonth, gyear, tm, glong, glat, hp)
+	my = l7390result1.P
+	by = l7390result1.Q
+	x = mz
+	y = bz
+	tm = xh + 1.0
+	hp = hz
+	var l7390result2 patype.UtLastContactSolarEclipseL7390 = UtLastContactSolarEclipse_L7390(x, y, igday, gmonth, gyear, tm, glong, glat, hp)
+	mz = l7390result2.P
+	bz = l7390result2.Q
+
+	var x0 float64 = xh + 1.0 - (2.0 * bz / (bz - by))
+	var dm float64 = mz - my
+
+	if dm < 0.0 {
+		dm += tp
+	}
+
+	var lj float64 = (dm - sb) / 2.0
+	var mr float64 = my + (dm * (x0 - xh + 1.0) / 2.0)
+	ut = x0 - 0.13851852
+	var rr float64 = SunDist(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear)
+	var sr float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	sr += pautil.DegreesToRadians(NutatLong(igday, gmonth, gyear) - 0.00569)
+	x = sr
+	y = 0.0
+	tm = ut
+	hp = 0.00004263452 / rr
+	var l7390result3 patype.UtLastContactSolarEclipseL7390 = UtLastContactSolarEclipse_L7390(x, y, igday, gmonth, gyear, tm, glong, glat, hp)
+	sr = l7390result3.P
+	by -= l7390result3.Q
+	bz -= l7390result3.Q
+	// var p3 float64 = 0.00004263  // not used
+	var zh float64 = (sr - mr) / lj
+	var tc float64 = x0 + zh
+	var sh float64 = (((bz - by) * (tc - xh - 1.0) / 2.0) + bz) / lj
+	var s2 float64 = sh * sh
+	var z2 float64 = zh * zh
+	// var ps float64 = p3 / (rr * lj)  // not used
+	var z1 float64 = (zh * z2 / (z2 + s2)) + x0
+	var h0 float64 = (hy + hz) / (2.0 * lj)
+	var rm float64 = 0.272446 * h0
+	var rn float64 = 0.00465242 / (lj * rr)
+	// var hd float64 = h0 * 0.99834  // not used
+	// var _ru float64 = (hd - rn + ps) * 1.02  // not used
+	// var _rp float64 = (hd + rn + ps) * 1.02  // not used
+	// var pj float64 = math.Abs(sh * zh / math.Sqrt(s2+z2))  // not used
+	var r float64 = rm + rn
+	var dd float64 = z1 - x0
+	dd = dd*dd - ((z2 - (r * r)) * dd / zh)
+
+	if dd < 0.0 {
+		return -99.0
+	}
+
+	var zd float64 = math.Sqrt(dd)
+	var z7 float64 = z1 + zd - Lint((z1+zd)/24.0)*24.0
+
+	return z7
+}
+
+/* Helper function for ut_last_contact_solar_eclipse */
+func UtLastContactSolarEclipse_L7390(
+	x float64, y float64, igday float64, gmonth int, gyear int, tm float64, glong float64, glat float64, hp float64,
+) patype.UtLastContactSolarEclipseL7390 {
+	var paa float64 = EclipticRightAscension(Degrees(x), 0.0, 0.0, Degrees(y), 0.0, 0.0, igday, gmonth, gyear)
+	var qaa float64 = EclipticDeclination(Degrees(x), 0.0, 0.0, Degrees(y), 0.0, 0.0, igday, gmonth, gyear)
+	var xaa float64 = RightAscensionToHourAngle(DecimalDegreesToDegreeHours(paa), 0.0, 0.0, tm, 0.0, 0.0, 0, 0, igday, gmonth, gyear, glong)
+	var pbb float64 = ParallaxHa(xaa, 0.0, 0.0, qaa, 0.0, 0.0, patype.CoordinateType_Actual, glat, 0.0, Degrees(hp))
+	var qbb float64 = ParallaxDec(xaa, 0.0, 0.0, qaa, 0.0, 0.0, patype.CoordinateType_Actual, glat, 0.0, Degrees(hp))
+	var xbb float64 = HourAngleToRightAscension(pbb, 0.0, 0.0, tm, 0.0, 0.0, 0, 0, igday, gmonth, gyear, glong)
+	var p float64 = pautil.DegreesToRadians(EqeLong(xbb, 0.0, 0.0, qbb, 0.0, 0.0, igday, gmonth, gyear))
+	var q float64 = pautil.DegreesToRadians(EqeLat(xbb, 0.0, 0.0, qbb, 0.0, 0.0, igday, gmonth, gyear))
+
+	return patype.UtLastContactSolarEclipseL7390{Paa: paa, Qaa: qaa, Xaa: xaa, Pbb: pbb, Qbb: qbb, Xbb: xbb, P: p, Q: q}
+}
+
+/*
+Calculate magnitude of solar eclipse.
+
+Original macro name: MagSolarEclipse
+*/
+func MagSolarEclipse(dy float64, mn int, yr int, ds int, zc int, glong float64, glat float64) float64 {
+	var tp float64 = 2.0 * math.Pi
+
+	if SolarEclipseOccurrence(ds, zc, dy, mn, yr) == patype.SolarEclipseStatus_None {
+		return -99.0
+	}
+
+	var dj float64 = NewMoon(ds, zc, dy, mn, yr)
+	var gday float64 = JulianDateDay(dj)
+	var gmonth int = JulianDateMonth(dj)
+	var gyear int = JulianDateYear(dj)
+	var igday float64 = math.Floor(gday)
+	var xi float64 = gday - igday
+	var utnm float64 = xi * 24.0
+	var ut float64 = utnm - 1.0
+	var ly float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var my float64 = pautil.DegreesToRadians(MoonLongitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var by float64 = pautil.DegreesToRadians(MoonLatitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var hy float64 = pautil.DegreesToRadians(MoonHorizontalParallax(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	ut = utnm + 1.0
+	var sb float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear)) - ly
+	var mz float64 = pautil.DegreesToRadians(MoonLongitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var bz float64 = pautil.DegreesToRadians(MoonLatitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var hz float64 = pautil.DegreesToRadians(MoonHorizontalParallax(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+
+	if sb < 0.0 {
+		sb += tp
+	}
+
+	var xh float64 = utnm
+	var x float64 = my
+	var y float64 = by
+	var tm float64 = xh - 1.0
+	var hp float64 = hy
+	var l7390result1 patype.MagSolarEclipseL7390 = MagSolarEclipse_L7390(x, y, igday, gmonth, gyear, tm, glong, glat, hp)
+	my = l7390result1.P
+	by = l7390result1.Q
+	x = mz
+	y = bz
+	tm = xh + 1.0
+	hp = hz
+	var l7390result2 patype.MagSolarEclipseL7390 = MagSolarEclipse_L7390(x, y, igday, gmonth, gyear, tm, glong, glat, hp)
+	mz = l7390result2.P
+	bz = l7390result2.Q
+
+	var x0 float64 = xh + 1.0 - (2.0 * bz / (bz - by))
+	var dm float64 = mz - my
+
+	if dm < 0.0 {
+		dm += tp
+	}
+
+	var lj float64 = (dm - sb) / 2.0
+	var mr float64 = my + (dm * (x0 - xh + 1.0) / 2.0)
+	ut = x0 - 0.13851852
+	var rr float64 = SunDist(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear)
+	var sr float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	sr += pautil.DegreesToRadians(NutatLong(igday, gmonth, gyear) - 0.00569)
+	x = sr
+	y = 0.0
+	tm = ut
+	hp = 0.00004263452 / rr
+	var l7390result3 patype.MagSolarEclipseL7390 = MagSolarEclipse_L7390(x, y, igday, gmonth, gyear, tm, glong, glat, hp)
+	sr = l7390result3.P
+	by -= l7390result3.Q
+	bz -= l7390result3.Q
+	// var p3 float64 = 0.00004263  // not used
+	var zh float64 = (sr - mr) / lj
+	var tc float64 = x0 + zh
+	var sh float64 = (((bz - by) * (tc - xh - 1.0) / 2.0) + bz) / lj
+	var s2 float64 = sh * sh
+	var z2 float64 = zh * zh
+	// var ps float64 = p3 / (rr * lj)  // not used
+	var z1 float64 = (zh * z2 / (z2 + s2)) + x0
+	var h0 float64 = (hy + hz) / (2.0 * lj)
+	var rm float64 = 0.272446 * h0
+	var rn float64 = 0.00465242 / (lj * rr)
+	// var hd float64 = h0 * 0.99834  // not used
+	// var _ru float64 = (hd - rn + ps) * 1.02  // not used
+	// var _rp float64 = (hd + rn + ps) * 1.02  // not used
+	var pj float64 = math.Abs(sh * zh / math.Sqrt(s2+z2))
+	var r float64 = rm + rn
+	var dd float64 = z1 - x0
+	dd = dd*dd - ((z2 - (r * r)) * dd / zh)
+
+	if dd < 0.0 {
+		return -99.0
+	}
+
+	// var zd float64 = math.Sqrt(dd)  // not used
+
+	var mg float64 = (rm + rn - pj) / (2.0 * rn)
+
+	return mg
+}
+
+/* Helper function for mag_solar_eclipse */
+func MagSolarEclipse_L7390(
+	x float64, y float64, igday float64, gmonth int, gyear int, tm float64, glong float64, glat float64, hp float64,
+) patype.MagSolarEclipseL7390 {
+	var paa float64 = EclipticRightAscension(Degrees(x), 0.0, 0.0, Degrees(y), 0.0, 0.0, igday, gmonth, gyear)
+	var qaa float64 = EclipticDeclination(Degrees(x), 0.0, 0.0, Degrees(y), 0.0, 0.0, igday, gmonth, gyear)
+	var xaa float64 = RightAscensionToHourAngle(DecimalDegreesToDegreeHours(paa), 0.0, 0.0, tm, 0.0, 0.0, 0, 0, igday, gmonth, gyear, glong)
+	var pbb float64 = ParallaxHa(xaa, 0.0, 0.0, qaa, 0.0, 0.0, patype.CoordinateType_Actual, glat, 0.0, Degrees(hp))
+	var qbb float64 = ParallaxDec(xaa, 0.0, 0.0, qaa, 0.0, 0.0, patype.CoordinateType_Actual, glat, 0.0, Degrees(hp))
+	var xbb float64 = HourAngleToRightAscension(pbb, 0.0, 0.0, tm, 0.0, 0.0, 0, 0, igday, gmonth, gyear, glong)
+	var p float64 = pautil.DegreesToRadians(EqeLong(xbb, 0.0, 0.0, qbb, 0.0, 0.0, igday, gmonth, gyear))
+	var q float64 = pautil.DegreesToRadians(EqeLat(xbb, 0.0, 0.0, qbb, 0.0, 0.0, igday, gmonth, gyear))
+
+	return patype.MagSolarEclipseL7390{Paa: paa, Qaa: qaa, Xaa: xaa, Pbb: pbb, Qbb: qbb, Xbb: xbb, P: p, Q: q}
+}

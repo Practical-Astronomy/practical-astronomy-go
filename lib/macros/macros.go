@@ -2330,3 +2330,25 @@ func UtDayAdjust(ut float64, g1 float64) float64 {
 func FPart(w float64) float64 {
 	return w - Lint(w)
 }
+
+/* Original macro name: EQElat */
+func EqeLat(rah float64, ram float64, ras float64, dd float64, dm float64, ds float64, gd float64, gm int, gy int) float64 {
+	var a float64 = pautil.DegreesToRadians(DegreeHoursToDecimalDegrees(HmsDh(rah, ram, ras)))
+	var b float64 = pautil.DegreesToRadians(DegreesMinutesSecondsToDecimalDegrees(dd, dm, ds))
+	var c float64 = pautil.DegreesToRadians(Obliq(gd, gm, gy))
+	var d float64 = math.Sin(b)*math.Cos(c) - math.Cos(b)*math.Sin(c)*math.Sin(a)
+
+	return Degrees(math.Asin(d))
+}
+
+/* Original macro name: EQElong */
+func EqeLong(rah float64, ram float64, ras float64, dd float64, dm float64, ds float64, gd float64, gm int, gy int) float64 {
+	var a float64 = pautil.DegreesToRadians(DegreeHoursToDecimalDegrees(HmsDh(rah, ram, ras)))
+	var b float64 = pautil.DegreesToRadians(DegreesMinutesSecondsToDecimalDegrees(dd, dm, ds))
+	var c float64 = pautil.DegreesToRadians(Obliq(gd, gm, gy))
+	var d float64 = math.Sin(a)*math.Cos(c) + math.Tan(b)*math.Sin(c)
+	var e float64 = math.Cos(a)
+	var f float64 = Degrees(math.Atan2(d, e))
+
+	return f - 360.0*math.Floor(f/360.0)
+}

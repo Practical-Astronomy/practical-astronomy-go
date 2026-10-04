@@ -523,6 +523,13 @@ type LunarEclipseCircumstances struct {
 	EclipseMagnitude          float64
 }
 
+type SolarEclipseOccurrence struct {
+	Status         SolarEclipseStatus
+	EventDateDay   float64
+	EventDateMonth int
+	EventDateYear  int
+}
+
 type LunarEclipseOccurrence_L6855 struct {
 	F  float64
 	Dd float64
@@ -534,4 +541,34 @@ type LunarEclipseOccurrence_L6855 struct {
 
 type (
 	SolarEclipseOccurrence_L6855 = LunarEclipseOccurrence_L6855
+)
+
+type SolarEclipseCircumstances struct {
+	CertainDateDay        float64
+	CertainDateMonth      int
+	CertainDateYear       int
+	UtFirstContactHour    float64
+	UtFirstContactMinutes float64
+	UtMidEclipseHour      float64
+	UtMidEclipseMinutes   float64
+	UtLastContactHour     float64
+	UtLastContactMinutes  float64
+	EclipseMagnitude      float64
+}
+
+type UtMaxSolarEclipseL7390 struct {
+	Paa float64
+	Qaa float64
+	Xaa float64
+	Pbb float64
+	Qbb float64
+	Xbb float64
+	P   float64
+	Q   float64
+}
+
+type (
+	UtFirstContactSolarEclipseL7390 = UtMaxSolarEclipseL7390
+	UtLastContactSolarEclipseL7390  = UtMaxSolarEclipseL7390
+	MagSolarEclipseL7390            = UtMaxSolarEclipseL7390
 )

@@ -62,3 +62,11 @@ const (
 	LunarEclipseStatus_Possible
 	LunarEclipseStatus_None
 )
+
+type SolarEclipseStatus int
+
+const (
+	SolarEclipseStatus_Certain SolarEclipseStatus = iota
+	SolarEclipseStatus_Possible
+	SolarEclipseStatus_None
+)
