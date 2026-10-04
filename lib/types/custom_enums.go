@@ -54,3 +54,11 @@ const (
 	AccuracyLevel_Approximate AccuracyLevel = iota
 	AccuracyLevel_Precise
 )
+
+type LunarEclipseStatus int
+
+const (
+	LunarEclipseStatus_Certain LunarEclipseStatus = iota
+	LunarEclipseStatus_Possible
+	LunarEclipseStatus_None
+)

@@ -2325,3 +2325,8 @@ func UtDayAdjust(ut float64, g1 float64) float64 {
 
 	return returnValue
 }
+
+/* Original macro name: Fpart */
+func FPart(w float64) float64 {
+	return w - Lint(w)
+}

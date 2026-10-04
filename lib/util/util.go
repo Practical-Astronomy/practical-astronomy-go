@@ -46,3 +46,11 @@ func BoolToInt(value bool) int {
 
 	return 0
 }
+
+func TernaryAssignFloat64(isTrueState bool, trueStateValue float64, falseStateValue float64) float64 {
+	if isTrueState {
+		return trueStateValue
+	} else {
+		return falseStateValue
+	}
+}

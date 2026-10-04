@@ -494,3 +494,44 @@ type MoonRiseAzL6700 struct {
 type (
 	MoonSetAzL6700 = MoonRiseAzL6700
 )
+
+type LunarEclipseOccurrence struct {
+	Status         LunarEclipseStatus
+	EventDateDay   float64
+	EventDateMonth int
+	EventDateYear  int
+}
+
+type LunarEclipseCircumstances struct {
+	CertainDateDay            float64
+	CertainDateMonth          float64
+	CertainDateYear           float64
+	UtStartPenPhaseHour       float64
+	UtStartPenPhaseMinutes    float64
+	UtStartUmbralPhaseHour    float64
+	UtStartUmbralPhaseMinutes float64
+	UtStartTotalPhaseHour     float64
+	UtStartTotalPhaseMinutes  float64
+	UtMidEclipseHour          float64
+	UtMidEclipseMinutes       float64
+	UtEndTotalPhaseHour       float64
+	UtEndTotalPhaseMinutes    float64
+	UtEndUmbralPhaseHour      float64
+	UtEndUmbralPhaseMinutes   float64
+	UtEndPenPhaseHour         float64
+	UtEndPenPhaseMinutes      float64
+	EclipseMagnitude          float64
+}
+
+type LunarEclipseOccurrence_L6855 struct {
+	F  float64
+	Dd float64
+	E1 float64
+	B1 float64
+	A  float64
+	B  float64
+}
+
+type (
+	SolarEclipseOccurrence_L6855 = LunarEclipseOccurrence_L6855
+)
