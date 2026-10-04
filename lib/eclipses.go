@@ -132,3 +132,94 @@ func LunarEclipseCircumstances(
 		EclipseMagnitude: eclipseMagnitude,
 	}
 }
+
+/* Determine if a solar eclipse is likely to occur. */
+func SolarEclipseOccurrence(
+	localDateDay float64, localDateMonth int, localDateYear int, isDaylightSaving bool, zoneCorrectionHours int,
+) patype.SolarEclipseOccurrence {
+	var daylightSaving int = pautil.BoolToInt(isDaylightSaving)
+
+	var julianDateOfNewMoon float64 = pamacro.NewMoon(daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear)
+	var gDateOfNewMoonDay float64 = pamacro.JulianDateDay(julianDateOfNewMoon)
+	var integerDay float64 = math.Floor(gDateOfNewMoonDay)
+	var gDateOfNewMoonMonth int = pamacro.JulianDateMonth(julianDateOfNewMoon)
+	var gDateOfNewMoonYear int = pamacro.JulianDateYear(julianDateOfNewMoon)
+	var utOfNewMoonHours float64 = gDateOfNewMoonDay - integerDay
+
+	var localCivilDateDay float64 = pamacro.UniversalTimeLocalCivilDay(
+		utOfNewMoonHours, 0.0, 0.0, daylightSaving, zoneCorrectionHours, integerDay, gDateOfNewMoonMonth, gDateOfNewMoonYear)
+	var localCivilDateMonth int = pamacro.UniversalTimeLocalCivilMonth(
+		utOfNewMoonHours, 0.0, 0.0, daylightSaving, zoneCorrectionHours, integerDay, gDateOfNewMoonMonth, gDateOfNewMoonYear)
+	var localCivilDateYear int = pamacro.UniversalTimeLocalCivilYear(
+		utOfNewMoonHours, 0.0, 0.0, daylightSaving, zoneCorrectionHours, integerDay, gDateOfNewMoonMonth, gDateOfNewMoonYear)
+
+	var eclipseOccurrence patype.SolarEclipseStatus = pamacro.SolarEclipseOccurrence(
+		daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear)
+
+	var status patype.SolarEclipseStatus = eclipseOccurrence
+	var eventDateDay float64 = localCivilDateDay
+	var eventDateMonth int = localCivilDateMonth
+	var eventDateYear int = localCivilDateYear
+
+	return patype.SolarEclipseOccurrence{
+		Status: status, EventDateDay: eventDateDay, EventDateMonth: eventDateMonth, EventDateYear: eventDateYear}
+}
+
+/* Calculate the circumstances of a solar eclipse. */
+func SolarEclipseCircumstances(
+	localDateDay float64, localDateMonth int, localDateYear int, isDaylightSaving bool, zoneCorrectionHours int,
+	geogLongitudeDeg float64, geogLatitudeDeg float64,
+) patype.SolarEclipseCircumstances {
+	var daylightSaving int = pautil.BoolToInt(isDaylightSaving)
+
+	var julianDateOfNewMoon float64 = pamacro.NewMoon(daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear)
+	var gDateOfNewMoonDay float64 = pamacro.JulianDateDay(julianDateOfNewMoon)
+	var integerDay float64 = math.Floor(gDateOfNewMoonDay)
+	var gDateOfNewMoonMonth int = pamacro.JulianDateMonth(julianDateOfNewMoon)
+	var gDateOfNewMoonYear int = pamacro.JulianDateYear(julianDateOfNewMoon)
+	var utOfNewMoonHours float64 = gDateOfNewMoonDay - integerDay
+	var localCivilDateDay float64 = pamacro.UniversalTimeLocalCivilDay(
+		utOfNewMoonHours, 0.0, 0.0, daylightSaving, zoneCorrectionHours, integerDay, gDateOfNewMoonMonth, gDateOfNewMoonYear)
+	var localCivilDateMonth int = pamacro.UniversalTimeLocalCivilMonth(
+		utOfNewMoonHours, 0.0, 0.0, daylightSaving, zoneCorrectionHours, integerDay, gDateOfNewMoonMonth, gDateOfNewMoonYear)
+	var localCivilDateYear int = pamacro.UniversalTimeLocalCivilYear(
+		utOfNewMoonHours, 0.0, 0.0, daylightSaving, zoneCorrectionHours, integerDay, gDateOfNewMoonMonth, gDateOfNewMoonYear)
+
+	var utMaxEclipse float64 = pamacro.UtMaxSolarEclipse(
+		localDateDay, localDateMonth, localDateYear, daylightSaving, zoneCorrectionHours, geogLongitudeDeg, geogLatitudeDeg)
+	var utFirstContact float64 = pamacro.UtFirstContactSolarEclipse(
+		localDateDay, localDateMonth, localDateYear, daylightSaving, zoneCorrectionHours, geogLongitudeDeg, geogLatitudeDeg)
+	var utLastContact float64 = pamacro.UtLastContactSolarEclipse(
+		localDateDay, localDateMonth, localDateYear, daylightSaving, zoneCorrectionHours, geogLongitudeDeg, geogLatitudeDeg)
+	var magnitude float64 = pamacro.MagSolarEclipse(
+		localDateDay, localDateMonth, localDateYear, daylightSaving, zoneCorrectionHours, geogLongitudeDeg, geogLatitudeDeg)
+
+	var certainDateDay float64 = localCivilDateDay
+	var certainDateMonth int = localCivilDateMonth
+	var certainDateYear int = localCivilDateYear
+
+	var utFirstContactHour float64 = pautil.TernaryAssignFloat64(
+		utFirstContact == -99.0, -99.0, float64(pamacro.DecimalHoursHour(utFirstContact+0.008333)))
+	var utFirstContactMinutes float64 = pautil.TernaryAssignFloat64(
+		utFirstContact == -99.0, -99.0, float64(pamacro.DecimalHoursMinute(utFirstContact+0.008333)))
+
+	var utMidEclipseHour float64 = pautil.TernaryAssignFloat64(
+		utMaxEclipse == -99.0, -99.0, float64(pamacro.DecimalHoursHour(utMaxEclipse+0.008333)))
+	var utMidEclipseMinutes float64 = pautil.TernaryAssignFloat64(
+		utMaxEclipse == -99.0, -99.0, float64(pamacro.DecimalHoursMinute(utMaxEclipse+0.008333)))
+
+	var utLastContactHour float64 = pautil.TernaryAssignFloat64(
+		utLastContact == -99.0, -99.0, float64(pamacro.DecimalHoursHour(utLastContact+0.008333)))
+	var utLastContactMinutes float64 = pautil.TernaryAssignFloat64(
+		utLastContact == -99.0, -99.0, float64(pamacro.DecimalHoursMinute(utLastContact+0.008333)))
+
+	var eclipseMagnitude float64 = pautil.TernaryAssignFloat64(magnitude == -99.0, -99.0, pautil.RoundTo(magnitude, 3))
+
+	return patype.SolarEclipseCircumstances{
+		CertainDateDay: certainDateDay, CertainDateMonth: certainDateMonth, CertainDateYear: certainDateYear,
+		UtFirstContactHour: utFirstContactHour, UtFirstContactMinutes: utFirstContactMinutes,
+		UtMidEclipseHour: utMidEclipseHour, UtMidEclipseMinutes: utMidEclipseMinutes,
+		UtLastContactHour: utLastContactHour, UtLastContactMinutes: utLastContactMinutes,
+		EclipseMagnitude: eclipseMagnitude,
+	}
+}
