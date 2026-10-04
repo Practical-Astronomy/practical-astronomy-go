@@ -1276,3 +1276,813 @@ func MoonSetAzL6700(lct float64, ds int, zc int, dy1 float64, mn1 int, yr1 int, 
 
 	return patype.MoonSetAzL6700{Mm: mm, Bm: bm, Pm: pm, Dp: dp, Th: th, Di: di, P: p, Q: q, Lu: lu, Lct: lct, Au: au}
 }
+
+/*
+Determine if a lunar eclipse is likely to occur.
+
+Original macro name: LEOccurrence
+*/
+func LunarEclipseOccurrence(ds int, zc int, dy float64, mn int, yr int) patype.LunarEclipseStatus {
+	var d0 float64 = LocalCivilTimeGreenwichDay(12.0, 0.0, 0.0, ds, zc, dy, mn, yr)
+	var m0 int = int(LocalCivilTimeGreenwichMonth(12.0, 0.0, 0.0, ds, zc, dy, mn, yr))
+	var y0 int = int(LocalCivilTimeGreenwichYear(12.0, 0.0, 0.0, ds, zc, dy, mn, yr))
+
+	var j0 float64 = CivilDateToJulianDate(0.0, 1, float64(y0))
+	var dj float64 = CivilDateToJulianDate(d0, float64(m0), float64(y0))
+	var k float64 = (float64(y0) - 1900.0 + ((dj - j0) * 1.0 / 365.0)) * 12.3685
+	k = Lint(k + 0.5)
+	var tn float64 = k / 1236.85
+	var tf float64 = (k + 0.5) / 1236.85
+	var t float64 = tn
+	// var l6855Result1 patype.LunarEclipseOccurrence_L6855 = ma_lunar_eclipse_occurrence_l6855(t, k)  // not used
+	t = tf
+	k += 0.5
+	var l6855Result2 patype.LunarEclipseOccurrence_L6855 = LunarEclipseOccurrence_L6855(t, k)
+	var fb float64 = l6855Result2.F
+
+	var df float64 = math.Abs(fb - 3.141592654*Lint(fb/3.141592654))
+
+	if df > 0.37 {
+		df = 3.141592654 - df
+	}
+
+	var s patype.LunarEclipseStatus = patype.LunarEclipseStatus_Certain
+	if df >= 0.242600766 {
+		s = patype.LunarEclipseStatus_Possible
+
+		if df > 0.37 {
+			s = patype.LunarEclipseStatus_None
+		}
+	}
+
+	return s
+}
+
+/* Helper function for lunar_eclipse_occurrence */
+func LunarEclipseOccurrence_L6855(t float64, k float64) patype.LunarEclipseOccurrence_L6855 {
+	var t2 float64 = t * t
+	var e float64 = 29.53 * k
+	var c float64 = 166.56 + (132.87-0.009173*t)*t
+	c = pautil.DegreesToRadians(c)
+	var b float64 = 0.00058868*k + (0.0001178-0.000000155*t)*t2
+	b = b + 0.00033*math.Sin(c) + 0.75933
+	var a float64 = k / 12.36886
+	var a1 float64 = 359.2242 + 360.0*FPart(a) - (0.0000333+0.00000347*t)*t2
+	var a2 float64 = 306.0253 + 360.0*FPart(k/0.9330851)
+	a2 += (0.0107306 + 0.00001236*t) * t2
+	a = k / 0.9214926
+	var f float64 = 21.2964 + 360.0*FPart(a) - (0.0016528+0.00000239*t)*t2
+	a1 = UnwindDeg(a1)
+	a2 = UnwindDeg(a2)
+	f = UnwindDeg(f)
+	a1 = pautil.DegreesToRadians(a1)
+	a2 = pautil.DegreesToRadians(a2)
+	f = pautil.DegreesToRadians(f)
+
+	var dd1 float64 = (0.1734-0.000393*t)*math.Sin(a1) + 0.0021*math.Sin(2.0*a1)
+	dd1 = dd1 - 0.4068*math.Sin(a2) + 0.0161*math.Sin(2.0*a2) - 0.0004*math.Sin(3.0*a2)
+	dd1 = dd1 + 0.0104*math.Sin(2.0*f) - 0.0051*math.Sin(a1+a2)
+	dd1 = dd1 - 0.0074*math.Sin(a1-a2) + 0.0004*math.Sin(2.0*f+a1)
+	dd1 = dd1 - 0.0004*math.Sin(2.0*f-a1) - 0.0006*math.Sin(2.0*f+a2) + 0.001*math.Sin(2.0*f-a2)
+	dd1 += 0.0005 * math.Sin(a1+2.0*a2)
+	var e1 float64 = math.Floor(e)
+	b = b + dd1 + (e - e1)
+	var b1 float64 = math.Floor(b)
+	a = e1 + b1
+	b -= b1
+
+	return patype.LunarEclipseOccurrence_L6855{F: f, Dd: dd1, E1: e1, B1: b1, A: a, B: b}
+}
+
+/*
+Calculate time of maximum shadow for lunar eclipse (UT)
+
+Original macro name: UTMaxLunarEclipse
+*/
+func UtMaxLunarEclipse(dy float64, mn int, yr int, ds int, zc int) float64 {
+	var tp float64 = 2.0 * math.Pi
+
+	if LunarEclipseOccurrence(ds, zc, dy, mn, yr) == patype.LunarEclipseStatus_None {
+		return -99.0
+	}
+
+	var dj float64 = FullMoon(ds, zc, dy, mn, yr)
+	var gday float64 = JulianDateDay(dj)
+	var gmonth int = JulianDateMonth(dj)
+	var gyear int = JulianDateYear(dj)
+	var igday float64 = math.Floor(gday)
+	var xi float64 = gday - igday
+	var utfm float64 = xi * 24.0
+	var ut float64 = utfm - 1.0
+	var ly float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var my float64 = pautil.DegreesToRadians(MoonLongitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var by float64 = pautil.DegreesToRadians(MoonLatitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var hy float64 = pautil.DegreesToRadians(MoonHorizontalParallax(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	ut = utfm + 1.0
+	var sb float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear)) - ly
+	var mz float64 = pautil.DegreesToRadians(MoonLongitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var bz float64 = pautil.DegreesToRadians(MoonLatitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var hz float64 = pautil.DegreesToRadians(MoonHorizontalParallax(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+
+	if sb < 0.0 {
+		sb += tp
+	}
+
+	var xh float64 = utfm
+	var x0 float64 = xh + 1.0 - (2.0 * bz / (bz - by))
+	var dm float64 = mz - my
+
+	if dm < 0.0 {
+		dm += tp
+	}
+
+	var lj float64 = (dm - sb) / 2.0
+	var q float64 = 0.0
+	var mr float64 = my + (dm * (x0 - xh + 1.0) / 2.0)
+	ut = x0 - 0.13851852
+	var rr float64 = SunDist(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear)
+	var sr float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	sr += pautil.DegreesToRadians(NutatLong(igday, gmonth, gyear) - 0.00569)
+	sr = sr + math.Pi - Lint((sr+math.Pi)/tp)*tp
+	by -= q
+	bz -= q
+	var p3 float64 = 0.00004263
+	var zh float64 = (sr - mr) / lj
+	var tc float64 = x0 + zh
+	var sh float64 = (((bz - by) * (tc - xh - 1.0) / 2.0) + bz) / lj
+	var s2 float64 = sh * sh
+	var z2 float64 = zh * zh
+	var ps float64 = p3 / (rr * lj)
+	var z1 float64 = (zh * z2 / (z2 + s2)) + x0
+	var h0 float64 = (hy + hz) / (2.0 * lj)
+	var rm float64 = 0.272446 * h0
+	var rn float64 = 0.00465242 / (lj * rr)
+	var hd float64 = h0 * 0.99834
+	var rp float64 = (hd + rn + ps) * 1.02
+	var r float64 = rm + rp
+	var dd float64 = z1 - x0
+	dd = dd*dd - ((z2 - (r * r)) * dd / zh)
+
+	if dd < 0.0 {
+		return -99.0
+	}
+
+	return z1
+}
+
+/*
+Calculate time of first shadow contact for lunar eclipse (UT)
+
+Original macro name: UTFirstContactLunarEclipse
+*/
+func UtFirstContactLunarEclipse(dy float64, mn int, yr int, ds int, zc int) float64 {
+	var tp float64 = 2.0 * math.Pi
+
+	if LunarEclipseOccurrence(ds, zc, dy, mn, yr) == patype.LunarEclipseStatus_None {
+		return -99.0
+	}
+
+	var dj float64 = FullMoon(ds, zc, dy, mn, yr)
+	var gday float64 = JulianDateDay(dj)
+	var gmonth int = JulianDateMonth(dj)
+	var gyear int = JulianDateYear(dj)
+	var igday float64 = math.Floor(gday)
+	var xi float64 = gday - igday
+	var utfm float64 = xi * 24.0
+	var ut float64 = utfm - 1.0
+	var ly float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var my float64 = pautil.DegreesToRadians(MoonLongitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var by float64 = pautil.DegreesToRadians(MoonLatitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var hy float64 = pautil.DegreesToRadians(MoonHorizontalParallax(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	ut = utfm + 1.0
+	var sb float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear)) - ly
+	var mz float64 = pautil.DegreesToRadians(MoonLongitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var bz float64 = pautil.DegreesToRadians(MoonLatitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var hz float64 = pautil.DegreesToRadians(MoonHorizontalParallax(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+
+	if sb < 0.0 {
+		sb += tp
+	}
+
+	var xh float64 = utfm
+	var x0 float64 = xh + 1.0 - (2.0 * bz / (bz - by))
+	var dm float64 = mz - my
+
+	if dm < 0.0 {
+		dm += tp
+	}
+
+	var lj float64 = (dm - sb) / 2.0
+	var q float64 = 0.0
+	var mr float64 = my + (dm * (x0 - xh + 1.0) / 2.0)
+	ut = x0 - 0.13851852
+	var rr float64 = SunDist(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear)
+	var sr float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	sr += pautil.DegreesToRadians(NutatLong(igday, gmonth, gyear) - 0.00569)
+	sr = sr + math.Pi - Lint((sr+math.Pi)/tp)*tp
+	by -= q
+	bz -= q
+	var p3 float64 = 0.00004263
+	var zh float64 = (sr - mr) / lj
+	var tc float64 = x0 + zh
+	var sh float64 = (((bz - by) * (tc - xh - 1.0) / 2.0) + bz) / lj
+	var s2 float64 = sh * sh
+	var z2 float64 = zh * zh
+	var ps float64 = p3 / (rr * lj)
+	var z1 float64 = (zh * z2 / (z2 + s2)) + x0
+	var h0 float64 = (hy + hz) / (2.0 * lj)
+	var rm float64 = 0.272446 * h0
+	var rn float64 = 0.00465242 / (lj * rr)
+	var hd float64 = h0 * 0.99834
+	var rp float64 = (hd + rn + ps) * 1.02
+	var r float64 = rm + rp
+	var dd float64 = z1 - x0
+	dd = dd*dd - ((z2 - (r * r)) * dd / zh)
+
+	if dd < 0.0 {
+		return -99.0
+	}
+
+	var zd float64 = math.Sqrt(dd)
+	var z6 float64 = z1 - zd
+
+	if z6 < 0.0 {
+		z6 += 24.0
+	}
+
+	return z6
+}
+
+/*
+Calculate time of last shadow contact for lunar eclipse (UT)
+
+Original macro name: UTLastContactLunarEclipse
+*/
+func UtLastContactLunarEclipse(dy float64, mn int, yr int, ds int, zc int) float64 {
+	var tp float64 = 2.0 * math.Pi
+
+	if LunarEclipseOccurrence(ds, zc, dy, mn, yr) == patype.LunarEclipseStatus_None {
+		return -99.0
+	}
+
+	var dj float64 = FullMoon(ds, zc, dy, mn, yr)
+	var gday float64 = JulianDateDay(dj)
+	var gmonth int = JulianDateMonth(dj)
+	var gyear int = JulianDateYear(dj)
+	var igday float64 = math.Floor(gday)
+	var xi float64 = gday - igday
+	var utfm float64 = xi * 24.0
+	var ut float64 = utfm - 1.0
+	var ly float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var my float64 = pautil.DegreesToRadians(MoonLongitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var by float64 = pautil.DegreesToRadians(MoonLatitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var hy float64 = pautil.DegreesToRadians(MoonHorizontalParallax(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	ut = utfm + 1.0
+	var sb float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear)) - ly
+	var mz float64 = pautil.DegreesToRadians(MoonLongitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var bz float64 = pautil.DegreesToRadians(MoonLatitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var hz float64 = pautil.DegreesToRadians(MoonHorizontalParallax(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+
+	if sb < 0.0 {
+		sb += tp
+	}
+
+	var xh float64 = utfm
+	var x0 float64 = xh + 1.0 - (2.0 * bz / (bz - by))
+	var dm float64 = mz - my
+
+	if dm < 0.0 {
+		dm += tp
+	}
+
+	var lj float64 = (dm - sb) / 2.0
+	var q float64 = 0.0
+	var mr float64 = my + (dm * (x0 - xh + 1.0) / 2.0)
+	ut = x0 - 0.13851852
+	var rr float64 = SunDist(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear)
+	var sr float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	sr += pautil.DegreesToRadians(NutatLong(igday, gmonth, gyear) - 0.00569)
+	sr = sr + math.Pi - Lint((sr+math.Pi)/tp)*tp
+	by -= q
+	bz -= q
+	var p3 float64 = 0.00004263
+	var zh float64 = (sr - mr) / lj
+	var tc float64 = x0 + zh
+	var sh float64 = (((bz - by) * (tc - xh - 1.0) / 2.0) + bz) / lj
+	var s2 float64 = sh * sh
+	var z2 float64 = zh * zh
+	var ps float64 = p3 / (rr * lj)
+	var z1 float64 = (zh * z2 / (z2 + s2)) + x0
+	var h0 float64 = (hy + hz) / (2.0 * lj)
+	var rm float64 = 0.272446 * h0
+	var rn float64 = 0.00465242 / (lj * rr)
+	var hd float64 = h0 * 0.99834
+	var rp float64 = (hd + rn + ps) * 1.02
+	var r float64 = rm + rp
+	var dd float64 = z1 - x0
+	dd = dd*dd - ((z2 - (r * r)) * dd / zh)
+
+	if dd < 0.0 {
+		return -99.0
+	}
+
+	var zd float64 = math.Sqrt(dd)
+	var z7 float64 = z1 + zd - Lint((z1+zd)/24.0)*24.0
+
+	return z7
+}
+
+/*
+Calculate start time of umbra phase of lunar eclipse (UT)
+
+Original macro name: UTStartUmbraLunarEclipse
+*/
+func UtStartUmbraLunarEclipse(dy float64, mn int, yr int, ds int, zc int) float64 {
+	var tp float64 = 2.0 * math.Pi
+
+	if LunarEclipseOccurrence(ds, zc, dy, mn, yr) == patype.LunarEclipseStatus_None {
+		return -99.0
+	}
+
+	var dj float64 = FullMoon(ds, zc, dy, mn, yr)
+	var gday float64 = JulianDateDay(dj)
+	var gmonth int = JulianDateMonth(dj)
+	var gyear int = JulianDateYear(dj)
+	var igday float64 = math.Floor(gday)
+	var xi float64 = gday - igday
+	var utfm float64 = xi * 24.0
+	var ut float64 = utfm - 1.0
+	var ly float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var my float64 = pautil.DegreesToRadians(MoonLongitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var by float64 = pautil.DegreesToRadians(MoonLatitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var hy float64 = pautil.DegreesToRadians(MoonHorizontalParallax(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	ut = utfm + 1.0
+	var sb float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear)) - ly
+	var mz float64 = pautil.DegreesToRadians(MoonLongitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var bz float64 = pautil.DegreesToRadians(MoonLatitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var hz float64 = pautil.DegreesToRadians(MoonHorizontalParallax(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+
+	if sb < 0.0 {
+		sb += tp
+	}
+
+	var xh float64 = utfm
+	var x0 float64 = xh + 1.0 - (2.0 * bz / (bz - by))
+	var dm float64 = mz - my
+
+	if dm < 0.0 {
+		dm += tp
+	}
+
+	var lj float64 = (dm - sb) / 2.0
+	var q float64 = 0.0
+	var mr float64 = my + (dm * (x0 - xh + 1.0) / 2.0)
+	ut = x0 - 0.13851852
+	var rr float64 = SunDist(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear)
+	var sr float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	sr += pautil.DegreesToRadians(NutatLong(igday, gmonth, gyear) - 0.00569)
+	sr = sr + math.Pi - Lint((sr+math.Pi)/tp)*tp
+	by -= q
+	bz -= q
+	var p3 float64 = 0.00004263
+	var zh float64 = (sr - mr) / lj
+	var tc float64 = x0 + zh
+	var sh float64 = (((bz - by) * (tc - xh - 1.0) / 2.0) + bz) / lj
+	var s2 float64 = sh * sh
+	var z2 float64 = zh * zh
+	var ps float64 = p3 / (rr * lj)
+	var z1 float64 = (zh * z2 / (z2 + s2)) + x0
+	var h0 float64 = (hy + hz) / (2.0 * lj)
+	var rm float64 = 0.272446 * h0
+	var rn float64 = 0.00465242 / (lj * rr)
+	var hd float64 = h0 * 0.99834
+	var ru float64 = (hd - rn + ps) * 1.02
+	var rp float64 = (hd + rn + ps) * 1.02
+	// var pj float64 = math.Abs(sh * zh / math.Sqrt(s2+z2)) // not used
+	var r float64 = rm + rp
+	var dd float64 = z1 - x0
+	dd = dd*dd - ((z2 - (r * r)) * dd / zh)
+
+	if dd < 0.0 {
+		return -99.0
+	}
+
+	var zd float64 = math.Sqrt(dd)
+	// var z6 float64 = z1 - zd // not used
+
+	r = rm + ru
+	dd = z1 - x0
+	dd = dd*dd - ((z2 - (r * r)) * dd / zh)
+
+	if dd < 0.0 {
+		return -99.0
+	}
+
+	zd = math.Sqrt(dd)
+	var z8 float64 = z1 - zd
+
+	if z8 < 0.0 {
+		z8 += 24.0
+	}
+
+	return z8
+}
+
+/*
+Calculate end time of umbra phase of lunar eclipse (UT)
+
+Original macro name: UTEndUmbraLunarEclipse
+*/
+func UtEndUmbraLunarEclipse(dy float64, mn int, yr int, ds int, zc int) float64 {
+	var tp float64 = 2.0 * math.Pi
+
+	if LunarEclipseOccurrence(ds, zc, dy, mn, yr) == patype.LunarEclipseStatus_None {
+		return -99.0
+	}
+
+	var dj float64 = FullMoon(ds, zc, dy, mn, yr)
+	var gday float64 = JulianDateDay(dj)
+	var gmonth int = JulianDateMonth(dj)
+	var gyear int = JulianDateYear(dj)
+	var igday float64 = math.Floor(gday)
+	var xi float64 = gday - igday
+	var utfm float64 = xi * 24.0
+	var ut float64 = utfm - 1.0
+	var ly float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var my float64 = pautil.DegreesToRadians(MoonLongitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var by float64 = pautil.DegreesToRadians(MoonLatitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var hy float64 = pautil.DegreesToRadians(MoonHorizontalParallax(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	ut = utfm + 1.0
+	var sb float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear)) - ly
+	var mz float64 = pautil.DegreesToRadians(MoonLongitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var bz float64 = pautil.DegreesToRadians(MoonLatitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var hz float64 = pautil.DegreesToRadians(MoonHorizontalParallax(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+
+	if sb < 0.0 {
+		sb += tp
+	}
+
+	var xh float64 = utfm
+	var x0 float64 = xh + 1.0 - (2.0 * bz / (bz - by))
+	var dm float64 = mz - my
+
+	if dm < 0.0 {
+		dm += tp
+	}
+
+	var lj float64 = (dm - sb) / 2.0
+	var q float64 = 0.0
+	var mr float64 = my + (dm * (x0 - xh + 1.0) / 2.0)
+	ut = x0 - 0.13851852
+	var rr float64 = SunDist(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear)
+	var sr float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	sr += pautil.DegreesToRadians(NutatLong(igday, gmonth, gyear) - 0.00569)
+	sr = sr + math.Pi - Lint((sr+math.Pi)/tp)*tp
+	by -= q
+	bz -= q
+	var p3 float64 = 0.00004263
+	var zh float64 = (sr - mr) / lj
+	var tc float64 = x0 + zh
+	var sh float64 = (((bz - by) * (tc - xh - 1.0) / 2.0) + bz) / lj
+	var s2 float64 = sh * sh
+	var z2 float64 = zh * zh
+	var ps float64 = p3 / (rr * lj)
+	var z1 float64 = (zh * z2 / (z2 + s2)) + x0
+	var h0 float64 = (hy + hz) / (2.0 * lj)
+	var rm float64 = 0.272446 * h0
+	var rn float64 = 0.00465242 / (lj * rr)
+	var hd float64 = h0 * 0.99834
+	var ru float64 = (hd - rn + ps) * 1.02
+	var rp float64 = (hd + rn + ps) * 1.02
+	// var pj float64 = math.Abs(sh * zh / math.Sqrt(s2+z2)) // not used
+	var r float64 = rm + rp
+	var dd float64 = z1 - x0
+	dd = dd*dd - ((z2 - (r * r)) * dd / zh)
+
+	if dd < 0.0 {
+		return -99.0
+	}
+
+	var zd float64 = math.Sqrt(dd)
+	// var z6 float64 = z1 - zd // not used
+
+	r = rm + ru
+	dd = z1 - x0
+	dd = dd*dd - ((z2 - (r * r)) * dd / zh)
+
+	if dd < 0.0 {
+		return -99.0
+	}
+
+	zd = math.Sqrt(dd)
+	var z9 float64 = z1 + zd - Lint((z1+zd)/24.0)*24.0
+
+	return z9
+}
+
+/*
+Calculate start time of total phase of lunar eclipse (UT)
+
+Original macro name: UTStartTotalLunarEclipse
+*/
+func UtStartTotalLunarEclipse(dy float64, mn int, yr int, ds int, zc int) float64 {
+	var tp float64 = 2.0 * math.Pi
+
+	if LunarEclipseOccurrence(ds, zc, dy, mn, yr) == patype.LunarEclipseStatus_None {
+		return -99.0
+	}
+
+	var dj float64 = FullMoon(ds, zc, dy, mn, yr)
+	var gday float64 = JulianDateDay(dj)
+	var gmonth int = JulianDateMonth(dj)
+	var gyear int = JulianDateYear(dj)
+	var igday float64 = math.Floor(gday)
+	var xi float64 = gday - igday
+	var utfm float64 = xi * 24.0
+	var ut float64 = utfm - 1.0
+	var ly float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var my float64 = pautil.DegreesToRadians(MoonLongitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var by float64 = pautil.DegreesToRadians(MoonLatitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var hy float64 = pautil.DegreesToRadians(MoonHorizontalParallax(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	ut = utfm + 1.0
+	var sb float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear)) - ly
+	var mz float64 = pautil.DegreesToRadians(MoonLongitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var bz float64 = pautil.DegreesToRadians(MoonLatitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var hz float64 = pautil.DegreesToRadians(MoonHorizontalParallax(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+
+	if sb < 0.0 {
+		sb += tp
+	}
+
+	var xh float64 = utfm
+	var x0 float64 = xh + 1.0 - (2.0 * bz / (bz - by))
+	var dm float64 = mz - my
+
+	if dm < 0.0 {
+		dm += tp
+	}
+
+	var lj float64 = (dm - sb) / 2.0
+	var q float64 = 0.0
+	var mr float64 = my + (dm * (x0 - xh + 1.0) / 2.0)
+	ut = x0 - 0.13851852
+	var rr float64 = SunDist(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear)
+	var sr float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	sr += pautil.DegreesToRadians(NutatLong(igday, gmonth, gyear) - 0.00569)
+	sr = sr + math.Pi - Lint((sr+math.Pi)/tp)*tp
+	by -= q
+	bz -= q
+	var p3 float64 = 0.00004263
+	var zh float64 = (sr - mr) / lj
+	var tc float64 = x0 + zh
+	var sh float64 = (((bz - by) * (tc - xh - 1.0) / 2.0) + bz) / lj
+	var s2 float64 = sh * sh
+	var z2 float64 = zh * zh
+	var ps float64 = p3 / (rr * lj)
+	var z1 float64 = (zh * z2 / (z2 + s2)) + x0
+	var h0 float64 = (hy + hz) / (2.0 * lj)
+	var rm float64 = 0.272446 * h0
+	var rn float64 = 0.00465242 / (lj * rr)
+	var hd float64 = h0 * 0.99834
+	var ru float64 = (hd - rn + ps) * 1.02
+	var rp float64 = (hd + rn + ps) * 1.02
+	// var pj float64 = math.Abs(sh * zh / math.Sqrt(s2+z2)) // not used
+	var r float64 = rm + rp
+	var dd float64 = z1 - x0
+	dd = dd*dd - ((z2 - (r * r)) * dd / zh)
+
+	if dd < 0.0 {
+		return -99.0
+	}
+
+	var zd float64 = math.Sqrt(dd)
+	// var z6 float64 = z1 - zd // not used
+
+	r = rm + ru
+	dd = z1 - x0
+	dd = dd*dd - ((z2 - (r * r)) * dd / zh)
+
+	if dd < 0.0 {
+		return -99.0
+	}
+
+	zd = math.Sqrt(dd)
+	// var z8 float64 = z1 - zd // not used
+
+	r = ru - rm
+	dd = z1 - x0
+	dd = dd*dd - ((z2 - (r * r)) * dd / zh)
+
+	if dd < 0.0 {
+		return -99.0
+	}
+
+	zd = math.Sqrt(dd)
+	var zcc float64 = z1 - zd
+
+	if zcc < 0.0 {
+		zcc = float64(zc) + 24.0
+	}
+
+	return zcc
+}
+
+/*
+Calculate end time of total phase of lunar eclipse (UT)
+
+Original macro name: UTEndTotalLunarEclipse
+*/
+func UtEndTotalLunarEclipse(dy float64, mn int, yr int, ds int, zc int) float64 {
+	var tp float64 = 2.0 * math.Pi
+
+	if LunarEclipseOccurrence(ds, zc, dy, mn, yr) == patype.LunarEclipseStatus_None {
+		return -99.0
+	}
+
+	var dj float64 = FullMoon(ds, zc, dy, mn, yr)
+	var gday float64 = JulianDateDay(dj)
+	var gmonth int = JulianDateMonth(dj)
+	var gyear int = JulianDateYear(dj)
+	var igday float64 = math.Floor(gday)
+	var xi float64 = gday - igday
+	var utfm float64 = xi * 24.0
+	var ut float64 = utfm - 1.0
+	var ly float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var my float64 = pautil.DegreesToRadians(MoonLongitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var by float64 = pautil.DegreesToRadians(MoonLatitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var hy float64 = pautil.DegreesToRadians(MoonHorizontalParallax(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	ut = utfm + 1.0
+	var sb float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear)) - ly
+	var mz float64 = pautil.DegreesToRadians(MoonLongitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var bz float64 = pautil.DegreesToRadians(MoonLatitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var hz float64 = pautil.DegreesToRadians(MoonHorizontalParallax(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+
+	if sb < 0.0 {
+		sb += tp
+	}
+
+	var xh float64 = utfm
+	var x0 float64 = xh + 1.0 - (2.0 * bz / (bz - by))
+	var dm float64 = mz - my
+
+	if dm < 0.0 {
+		dm += tp
+	}
+
+	var lj float64 = (dm - sb) / 2.0
+	var q float64 = 0.0
+	var mr float64 = my + (dm * (x0 - xh + 1.0) / 2.0)
+	ut = x0 - 0.13851852
+	var rr float64 = SunDist(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear)
+	var sr float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	sr += pautil.DegreesToRadians(NutatLong(igday, gmonth, gyear) - 0.00569)
+	sr = sr + math.Pi - Lint((sr+math.Pi)/tp)*tp
+	by -= q
+	bz -= q
+	var p3 float64 = 0.00004263
+	var zh float64 = (sr - mr) / lj
+	var tc float64 = x0 + zh
+	var sh float64 = (((bz - by) * (tc - xh - 1.0) / 2.0) + bz) / lj
+	var s2 float64 = sh * sh
+	var z2 float64 = zh * zh
+	var ps float64 = p3 / (rr * lj)
+	var z1 float64 = (zh * z2 / (z2 + s2)) + x0
+	var h0 float64 = (hy + hz) / (2.0 * lj)
+	var rm float64 = 0.272446 * h0
+	var rn float64 = 0.00465242 / (lj * rr)
+	var hd float64 = h0 * 0.99834
+	var ru float64 = (hd - rn + ps) * 1.02
+	var rp float64 = (hd + rn + ps) * 1.02
+	// var pj float64 = math.Abs(sh * zh / math.Sqrt(s2+z2)) // not used
+	var r float64 = rm + rp
+	var dd float64 = z1 - x0
+	dd = dd*dd - ((z2 - (r * r)) * dd / zh)
+
+	if dd < 0.0 {
+		return -99.0
+	}
+
+	var zd = math.Sqrt(dd)
+	// var z6 = z1 - zd // not used
+
+	r = rm + ru
+	dd = z1 - x0
+	dd = dd*dd - ((z2 - (r * r)) * dd / zh)
+
+	if dd < 0.0 {
+		return -99.0
+	}
+
+	zd = math.Sqrt(dd)
+	// var z8 float64 = z1 - zd // not used
+
+	r = ru - rm
+	dd = z1 - x0
+	dd = dd*dd - ((z2 - (r * r)) * dd / zh)
+
+	if dd < 0.0 {
+		return -99.0
+	}
+
+	zd = math.Sqrt(dd)
+	var zb float64 = z1 + zd - Lint((z1+zd)/24.0)*24.0
+
+	return zb
+}
+
+/*
+Calculate magnitude of lunar eclipse.
+
+Original macro name: MagLunarEclipse
+*/
+func MagLunarEclipse(dy float64, mn int, yr int, ds int, zc int) float64 {
+	var tp float64 = 2.0 * math.Pi
+
+	if LunarEclipseOccurrence(ds, zc, dy, mn, yr) == patype.LunarEclipseStatus_None {
+		return -99.0
+	}
+
+	var dj float64 = FullMoon(ds, zc, dy, mn, yr)
+	var gday float64 = JulianDateDay(dj)
+	var gmonth int = JulianDateMonth(dj)
+	var gyear int = JulianDateYear(dj)
+	var igday float64 = math.Floor(gday)
+	var xi float64 = gday - igday
+	var utfm float64 = xi * 24.0
+	var ut float64 = utfm - 1.0
+	var ly float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var my float64 = pautil.DegreesToRadians(MoonLongitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var by float64 = pautil.DegreesToRadians(MoonLatitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var hy float64 = pautil.DegreesToRadians(MoonHorizontalParallax(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	ut = utfm + 1.0
+	var sb float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear)) - ly
+	var mz float64 = pautil.DegreesToRadians(MoonLongitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var bz float64 = pautil.DegreesToRadians(MoonLatitude(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	var hz float64 = pautil.DegreesToRadians(MoonHorizontalParallax(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+
+	if sb < 0.0 {
+		sb += tp
+	}
+
+	var xh float64 = utfm
+	var x0 float64 = xh + 1.0 - (2.0 * bz / (bz - by))
+	var dm float64 = mz - my
+
+	if dm < 0.0 {
+		dm += tp
+	}
+
+	var lj float64 = (dm - sb) / 2.0
+	var q float64 = 0.0
+	var mr float64 = my + (dm * (x0 - xh + 1.0) / 2.0)
+	ut = x0 - 0.13851852
+	var rr float64 = SunDist(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear)
+	var sr float64 = pautil.DegreesToRadians(SunLong(ut, 0.0, 0.0, 0, 0, igday, gmonth, gyear))
+	sr += pautil.DegreesToRadians(NutatLong(igday, gmonth, gyear) - 0.00569)
+	sr = sr + math.Pi - Lint((sr+math.Pi)/tp)*tp
+	by -= q
+	bz -= q
+	var p3 float64 = 0.00004263
+	var zh float64 = (sr - mr) / lj
+	var tc float64 = x0 + zh
+	var sh float64 = (((bz - by) * (tc - xh - 1.0) / 2.0) + bz) / lj
+	var s2 float64 = sh * sh
+	var z2 float64 = zh * zh
+	var ps float64 = p3 / (rr * lj)
+	var z1 float64 = (zh * z2 / (z2 + s2)) + x0
+	var h0 float64 = (hy + hz) / (2.0 * lj)
+	var rm float64 = 0.272446 * h0
+	var rn float64 = 0.00465242 / (lj * rr)
+	var hd float64 = h0 * 0.99834
+	var ru float64 = (hd - rn + ps) * 1.02
+	var rp float64 = (hd + rn + ps) * 1.02
+	var pj float64 = math.Abs(sh * zh / math.Sqrt(s2+z2))
+	var r float64 = rm + rp
+	var dd float64 = z1 - x0
+	dd = dd*dd - ((z2 - (r * r)) * dd / zh)
+
+	if dd < 0.0 {
+		return -99.0
+	}
+
+	// var zd = math.Sqrt(dd) // not used
+	// var z6 = z1 - zd // not used
+
+	r = rm + ru
+	dd = z1 - x0
+	dd = dd*dd - ((z2 - (r * r)) * dd / zh)
+	var mg float64 = (rm + rp - pj) / (2.0 * rm)
+
+	if dd < 0.0 {
+		return mg
+	}
+
+	// zd = math.Sqrt(dd)
+	// var z8 float64 = z1 - zd // not used
+
+	r = ru - rm
+	dd = z1 - x0
+	mg = (rm + ru - pj) / (2.0 * rm)
+
+	return mg
+}
