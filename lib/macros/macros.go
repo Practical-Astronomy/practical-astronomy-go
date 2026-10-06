@@ -4,6 +4,7 @@ import (
 	"math"
 	padata "practicalastro/lib/data"
 	patype "practicalastro/lib/types"
+	"practicalastro/lib/util"
 	pautil "practicalastro/lib/util"
 )
 
@@ -21,11 +22,7 @@ func HmsDh(hours float64, minutes float64, seconds float64) float64 {
 	var b float64 = (math.Abs(fMinutes) + a) / 60.0
 	var c float64 = math.Abs(fHours) + b
 
-	if fHours < 0 || fMinutes < 0 || fSeconds < 0 {
-		return -c
-	} else {
-		return c
-	}
+	return pautil.TernaryAssign(fHours < 0 || fMinutes < 0 || fSeconds < 0, -c, c)
 }
 
 /* Extract hour part of decimal hours. */
@@ -34,18 +31,13 @@ func DecimalHoursHour(decimalHours float64) int {
 	var b float64 = a * 3600
 	var c float64 = pautil.RoundTo(b-60*math.Floor(b/60), 2)
 
-	var e float64
-	if c == 60 {
-		e = b + 60
-	} else {
-		e = b
-	}
+	var e float64 = pautil.TernaryAssign(c == 60, b+60, b)
 
-	if decimalHours < 0 {
-		return int(-(math.Floor(e / 3600)))
-	} else {
-		return int(math.Floor(e / 3600))
-	}
+	return pautil.TernaryAssign(
+		decimalHours < 0,
+		int(-(math.Floor(e / 3600))),
+		int(math.Floor(e/3600)),
+	)
 }
 
 /* Extract minutes part of decimal hours. */
@@ -54,12 +46,7 @@ func DecimalHoursMinute(decimalHours float64) int {
 	var b float64 = a * 3600
 	var c float64 = pautil.RoundTo(b-60*math.Floor(b/60), 2)
 
-	var e float64
-	if c == 60 {
-		e = b + 60
-	} else {
-		e = b
-	}
+	var e float64 = pautil.TernaryAssign(c == 60, b+60, b)
 
 	return int(math.Floor(e/60)) % 60
 }
@@ -70,12 +57,7 @@ func DecimalHoursSecond(decimalHours float64) float64 {
 	var b float64 = a * 3600
 	var c float64 = pautil.RoundTo(b-60*math.Floor(b/60), 2)
 
-	var d float64
-	if c == 60 {
-		d = 0
-	} else {
-		d = c
-	}
+	var d float64 = pautil.TernaryAssign(c == 60, 0, c)
 
 	return d
 }
@@ -90,19 +72,8 @@ func CivilDateToJulianDate(day float64, month float64, year float64) float64 {
 	var fMonth float64 = month
 	var fYear float64 = year
 
-	var y float64
-	if fMonth < 3 {
-		y = fYear - 1
-	} else {
-		y = fYear
-	}
-
-	var m float64
-	if fMonth < 3 {
-		m = fMonth + 12
-	} else {
-		m = fMonth
-	}
+	var y float64 = pautil.TernaryAssign(fMonth < 3, fYear-1, fYear)
+	var m float64 = pautil.TernaryAssign(fMonth < 3, fMonth+12, fMonth)
 
 	var b float64
 	if fYear > 1582 {
@@ -122,12 +93,11 @@ func CivilDateToJulianDate(day float64, month float64, year float64) float64 {
 		}
 	}
 
-	var c float64
-	if y < 0 {
-		c = math.Floor(((365.25 * y) - 0.75))
-	} else {
-		c = math.Floor(365.25 * y)
-	}
+	var c float64 = pautil.TernaryAssign(
+		y < 0,
+		math.Floor(((365.25 * y) - 0.75)),
+		math.Floor(365.25*y),
+	)
 
 	var d float64 = math.Floor(30.6001 * (m + 1.0))
 
@@ -144,12 +114,11 @@ func JulianDateDay(julianDate float64) float64 {
 	var f float64 = julianDate + 0.5 - i
 	var a float64 = math.Floor((i - 1867216.25) / 36524.25)
 
-	var b float64
-	if i > 2299160 {
-		b = i + 1 + a - math.Floor(a/4)
-	} else {
-		b = i
-	}
+	var b float64 = pautil.TernaryAssign(
+		i > 2299160,
+		i+1+a-math.Floor(a/4),
+		i,
+	)
 
 	var c float64 = b + 1524
 	var d float64 = math.Floor((c - 122.1) / 365.25)
@@ -168,26 +137,18 @@ func JulianDateMonth(julianDate float64) int {
 	var i float64 = math.Floor(julianDate + 0.5)
 	var a float64 = math.Floor((i - 1867216.25) / 36524.25)
 
-	var b float64
-	if i > 2299160 {
-		b = i + 1 + a - math.Floor(a/4)
-	} else {
-		b = i
-	}
+	var b float64 = pautil.TernaryAssign(
+		i > 2299160,
+		i+1+a-math.Floor(a/4),
+		i,
+	)
 
 	var c float64 = b + 1524
 	var d float64 = math.Floor((c - 122.1) / 365.25)
 	var e float64 = math.Floor(365.25 * d)
 	var g float64 = math.Floor((c - e) / 30.6001)
 
-	var returnValue float64
-	if g < 13.5 {
-		returnValue = g - 1
-	} else {
-		returnValue = g - 13
-	}
-
-	return int(returnValue)
+	return int(pautil.TernaryAssign(g < 13.5, g-1, g-13))
 }
 
 /*
@@ -199,33 +160,20 @@ func JulianDateYear(julianDate float64) int {
 	var i float64 = math.Floor(julianDate + 0.5)
 	var a float64 = math.Floor((i - 1867216.25) / 36524.25)
 
-	var b float64
-	if i > 2299160 {
-		b = i + 1.0 + a - math.Floor(a/4.0)
-	} else {
-		b = i
-	}
+	var b float64 = pautil.TernaryAssign(
+		i > 2299160,
+		i+1.0+a-math.Floor(a/4.0),
+		i,
+	)
 
 	var c float64 = b + 1524
 	var d float64 = math.Floor((c - 122.1) / 365.25)
 	var e float64 = math.Floor(365.25 * d)
 	var g float64 = math.Floor((c - e) / 30.6001)
 
-	var h float64
-	if g < 13.5 {
-		h = g - 1
-	} else {
-		h = g - 13
-	}
+	var h float64 = pautil.TernaryAssign(g < 13.5, g-1, g-13)
 
-	var returnValue float64
-	if h > 2.5 {
-		returnValue = d - 4716
-	} else {
-		returnValue = d - 4715
-	}
-
-	return int(returnValue)
+	return int(pautil.TernaryAssign(h > 2.5, d-4716, d-4715))
 }
 
 /*
@@ -246,11 +194,7 @@ func RightAscensionToHourAngle(
 	var g float64 = HmsDh(raHours, raMinutes, raSeconds)
 	var h float64 = f - g
 
-	if h < 0 {
-		return 24 + h
-	} else {
-		return h
-	}
+	return pautil.TernaryAssign(h < 0, 24+h, h)
 }
 
 /*
@@ -271,11 +215,7 @@ func HourAngleToRightAscension(
 	var g float64 = HmsDh(hourAngleHours, hourAngleMinutes, hourAngleSeconds)
 	var h float64 = f - g
 
-	if h < 0 {
-		return 24 + h
-	} else {
-		return h
-	}
+	return pautil.TernaryAssign(h < 0, 24+h, h)
 }
 
 /*
@@ -526,11 +466,7 @@ func DegreesMinutesSecondsToDecimalDegrees(degrees float64, minutes float64, sec
 	var b float64 = (math.Abs(minutes) + a) / 60
 	var c float64 = math.Abs(degrees) + b
 
-	if degrees < 0 || minutes < 0 || seconds < 0 {
-		return -c
-	} else {
-		return c
-	}
+	return pautil.TernaryAssign(degrees < 0 || minutes < 0 || seconds < 0, -c, c)
 }
 
 /*
@@ -551,18 +487,13 @@ func DecimalDegreesDegrees(decimalDegrees float64) float64 {
 	var a float64 = math.Abs(decimalDegrees)
 	var b float64 = a * 3600
 	var c float64 = pautil.RoundTo(b-60*math.Floor(b/60), 2)
-	var e float64
-	if c == 60 {
-		e = 60
-	} else {
-		e = b
-	}
+	var e float64 = pautil.TernaryAssign(c == 60, 60, b)
 
-	if decimalDegrees < 0 {
-		return -(math.Floor(e / 3600))
-	} else {
-		return math.Floor(e / 3600)
-	}
+	return util.TernaryAssign(
+		decimalDegrees < 0,
+		-(math.Floor(e / 3600)),
+		math.Floor(e/3600),
+	)
 }
 
 /*
@@ -574,12 +505,7 @@ func DecimalDegreesMinutes(decimalDegrees float64) float64 {
 	var a float64 = math.Abs(decimalDegrees)
 	var b float64 = a * 3600
 	var c float64 = pautil.RoundTo(b-60*math.Floor(b/60), 2)
-	var e float64
-	if c == 60 {
-		e = b + 60
-	} else {
-		e = b
-	}
+	var e float64 = pautil.TernaryAssign(c == 60, b+60, b)
 
 	return float64(int(math.Floor(e/60)) % 60)
 }
@@ -593,12 +519,7 @@ func DecimalDegreesSeconds(decimalDegrees float64) float64 {
 	var a float64 = math.Abs(decimalDegrees)
 	var b float64 = a * 3600
 	var c float64 = pautil.RoundTo(b-60*math.Floor(b/60), 2)
-	var d float64
-	if c == 60 {
-		d = 0
-	} else {
-		d = c
-	}
+	var d float64 = pautil.TernaryAssign(c == 60, 0, c)
 
 	return d
 }
@@ -845,12 +766,7 @@ Original macro name: Refract
 func Refract(y2 float64, sw patype.CoordinateType, pr float64, tr float64) float64 {
 	var y float64 = pautil.DegreesToRadians(y2)
 
-	var d float64
-	if sw == patype.CoordinateType_Actual {
-		d = -1.0
-	} else {
-		d = 1.0
-	}
+	var d float64 = pautil.TernaryAssign(sw == patype.CoordinateType_Actual, -1.0, 1.0)
 
 	if d == -1 {
 		var y3 float64 = y
@@ -934,12 +850,7 @@ func ParallaxHa(hh float64, hm float64, hs float64, dd float64, dm float64, ds f
 	var y float64 = pautil.DegreesToRadians(DegreesMinutesSecondsToDecimalDegrees(dd, dm, ds))
 	var y1 float64 = y
 
-	var d float64
-	if sw == patype.CoordinateType_Actual {
-		d = 1.0
-	} else {
-		d = -1.0
-	}
+	var d float64 = pautil.TernaryAssign(sw == patype.CoordinateType_Actual, 1.0, -1.0)
 
 	if d == 1 {
 		var result patype.ParallaxHelper = ParallaxHa_L2870(x, y, rc, rp, rs, tp)
@@ -1023,12 +934,7 @@ func ParallaxDec(hh float64, hm float64, hs float64, dd float64, dm float64, ds 
 	var y float64 = pautil.DegreesToRadians(DegreesMinutesSecondsToDecimalDegrees(dd, dm, ds))
 	var y1 float64 = y
 
-	var d float64
-	if sw == patype.CoordinateType_Actual {
-		d = 1.0
-	} else {
-		d = -1.0
-	}
+	var d float64 = pautil.TernaryAssign(sw == patype.CoordinateType_Actual, 1.0, -1.0)
 
 	if d == 1 {
 		var result patype.ParallaxHelper = ParallaxDec_L2870(x, y, rc, rp, rs, tp)
@@ -1140,11 +1046,11 @@ func EGstUt(gsh float64, gsm float64, gss float64, gd float64, gm int, gy int) p
 	var g float64 = f - e
 	var h float64 = g - (24 * math.Floor(g/24))
 
-	if (h * 0.9972695663) < (4.0 / 60.0) {
-		return patype.WarningFlag_Warning
-	} else {
-		return patype.WarningFlag_OK
-	}
+	return pautil.TernaryAssign(
+		(h*0.9972695663) < (4.0/60.0),
+		patype.WarningFlag_Warning,
+		patype.WarningFlag_OK,
+	)
 }
 
 /*
@@ -1159,14 +1065,7 @@ func RiseSetLocalSiderealTimeRise(rah float64, ram float64, ras float64, dd floa
 	var d float64 = pautil.DegreesToRadians(vd)
 	var e float64 = pautil.DegreesToRadians(g)
 	var f float64 = -(math.Sin(d) + math.Sin(e)*math.Sin(c)) / (math.Cos(e) * math.Cos(c))
-
-	var h float64
-	if math.Abs(f) < 1 {
-		h = math.Acos(f)
-	} else {
-		h = 0
-	}
-
+	var h float64 = pautil.TernaryAssign(math.Abs(f) < 1, math.Acos(f), 0)
 	var i float64 = DecimalDegreesToDegreeHours(Degrees(b - h))
 
 	return i - 24*math.Floor(i/24)
@@ -1184,12 +1083,7 @@ func RiseSetLocalSiderealTimeSet(rah float64, ram float64, ras float64, dd float
 	var d float64 = pautil.DegreesToRadians(vd)
 	var e float64 = pautil.DegreesToRadians(g)
 	var f float64 = -(math.Sin(d) + math.Sin(e)*math.Sin(c)) / (math.Cos(e) * math.Cos(c))
-	var h float64
-	if math.Abs(f) < 1 {
-		h = math.Acos(f)
-	} else {
-		h = 0
-	}
+	var h float64 = pautil.TernaryAssign(math.Abs(f) < 1, math.Acos(f), 0)
 	var i float64 = DecimalDegreesToDegreeHours(Degrees(b + h))
 
 	return i - 24*math.Floor(i/24)
@@ -1206,12 +1100,11 @@ func RiseSetAzimuthRise(rah float64, ram float64, ras float64, dd float64, dm fl
 	var e float64 = pautil.DegreesToRadians(g)
 	var f float64 = (math.Sin(c) + math.Sin(d)*math.Sin(e)) / (math.Cos(d) * math.Cos(e))
 
-	var h float64
-	if ERiseSet(rah, ram, ras, dd, dm, ds, vd, g) == patype.RiseSetStatus_OK {
-		h = math.Acos(f)
-	} else {
-		h = 0
-	}
+	var h float64 = pautil.TernaryAssign(
+		ERiseSet(rah, ram, ras, dd, dm, ds, vd, g) == patype.RiseSetStatus_OK,
+		math.Acos(f),
+		0,
+	)
 
 	var i float64 = Degrees(h)
 
@@ -1229,12 +1122,11 @@ func RiseSetAzimuthSet(rah float64, ram float64, ras float64, dd float64, dm flo
 	var e float64 = pautil.DegreesToRadians(g)
 	var f float64 = (math.Sin(c) + math.Sin(d)*math.Sin(e)) / (math.Cos(d) * math.Cos(e))
 
-	var h float64
-	if ERiseSet(rah, ram, ras, dd, dm, ds, vd, g) == patype.RiseSetStatus_OK {
-		h = math.Acos(f)
-	} else {
-		h = 0
-	}
+	var h float64 = pautil.TernaryAssign(
+		ERiseSet(rah, ram, ras, dd, dm, ds, vd, g) == patype.RiseSetStatus_OK,
+		math.Acos(f),
+		0,
+	)
 
 	var i float64 = 360 - Degrees(h)
 
@@ -1269,24 +1161,19 @@ func Angle(
 	xx2 float64, xm2 float64, xs2 float64, dd2 float64, dm2 float64, ds2 float64,
 	s patype.AngleMeasurementTypes,
 ) float64 {
-	var a float64
-	if s == patype.AngleMeasurementType_Hours {
-		a = DegreeHoursToDecimalDegrees(HmsDh(xx1, xm1, xs1))
-	} else {
-		a = DegreesMinutesSecondsToDecimalDegrees(xx1, xm1, xs1)
-	}
-
+	var a float64 = pautil.TernaryAssign(
+		s == patype.AngleMeasurementType_Hours,
+		DegreeHoursToDecimalDegrees(HmsDh(xx1, xm1, xs1)),
+		DegreesMinutesSecondsToDecimalDegrees(xx1, xm1, xs1),
+	)
 	var b float64 = pautil.DegreesToRadians(a)
 	var c float64 = DegreesMinutesSecondsToDecimalDegrees(dd1, dm1, ds1)
 	var d float64 = pautil.DegreesToRadians(c)
-
-	var e float64
-	if s == patype.AngleMeasurementType_Hours {
-		e = DegreeHoursToDecimalDegrees(HmsDh(xx2, xm2, xs2))
-	} else {
-		e = DegreesMinutesSecondsToDecimalDegrees(xx2, xm2, xs2)
-	}
-
+	var e float64 = pautil.TernaryAssign(
+		s == patype.AngleMeasurementType_Hours,
+		DegreeHoursToDecimalDegrees(HmsDh(xx2, xm2, xs2)),
+		DegreesMinutesSecondsToDecimalDegrees(xx2, xm2, xs2),
+	)
 	var f float64 = pautil.DegreesToRadians(e)
 	var g float64 = DegreesMinutesSecondsToDecimalDegrees(dd2, dm2, ds2)
 	var h float64 = pautil.DegreesToRadians(g)
@@ -1821,14 +1708,13 @@ func PlanetCoordinates(lh float64, lm float64, ls float64, ds int, zc int, dy fl
 	var l1 float64 = math.Sin(ll)
 	var l2 float64 = math.Cos(ll)
 
-	var ep float64 = 0
-	if ip < 3 {
-		ep = math.Atan(-1.0*rd*l1/(re-rd*l2)) + lg + math.Pi
-	} else {
-		ep = math.Atan(re*l1/(rd-re*l2)) + pd
-	}
-
-	ep = Unwind(ep)
+	var ep float64 = Unwind(
+		pautil.TernaryAssign(
+			ip < 3,
+			math.Atan(-1.0*rd*l1/(re-rd*l2))+lg+math.Pi,
+			math.Atan(re*l1/(rd-re*l2))+pd,
+		),
+	)
 
 	var bp float64 = math.Atan(rd * sp * math.Sin(ep-pd) / (ci * re * l1))
 
@@ -2238,15 +2124,13 @@ func PCometLongLatDist(lh float64, /* Local civil time, hour part. */
 		}
 	}
 
-	var ep float64
-
-	if rd < re {
-		ep = math.Atan(-rd*s3/(re-(rd*c3))) + lg + 3.141592654
-	} else {
-		ep = math.Atan(re*s3/(rd-(re*c3))) + lc
-	}
-
-	ep = Unwind(ep)
+	var ep float64 = Unwind(
+		pautil.TernaryAssign(
+			rd < re,
+			math.Atan(-rd*s3/(re-(rd*c3)))+lg+3.141592654,
+			math.Atan(re*s3/(rd-(re*c3)))+lc,
+		),
+	)
 
 	var tb float64 = rd * s2 * math.Sin(ep-lc) / (c2 * re * s3)
 	var bp float64 = math.Atan(tb)

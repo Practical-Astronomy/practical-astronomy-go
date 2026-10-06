@@ -56,19 +56,13 @@ func ApproximatePositionOfPlanet(
 	var atan2Type1 float64 = math.Atan2((rdAu * math.Sin(leLdRad)), (rAu2 - rdAu*math.Cos(leLdRad)))
 	var atan2Type2 float64 = math.Atan2((rAu2 * math.Sin(-leLdRad)), (rdAu - rAu2*math.Cos(leLdRad)))
 
-	var aRad float64
-	if rdAu < 1 {
-		aRad = atan2Type1
-	} else {
-		aRad = atan2Type2
-	}
+	var aRad float64 = pautil.TernaryAssign(rdAu < 1, atan2Type1, atan2Type2)
 
-	var lamdaDeg1 float64
-	if rdAu < 1 {
-		lamdaDeg1 = 180 + leDeg2 + pamacro.Degrees(aRad)
-	} else {
-		lamdaDeg1 = pamacro.Degrees(aRad) + ldDeg
-	}
+	var lamdaDeg1 float64 = pautil.TernaryAssign(
+		rdAu < 1,
+		180+leDeg2+pamacro.Degrees(aRad),
+		pamacro.Degrees(aRad)+ldDeg,
+	)
 
 	var lamdaDeg2 float64 = lamdaDeg1 - 360*math.Floor(lamdaDeg1/360)
 	var betaDeg float64 = pamacro.Degrees(math.Atan(rdAu * math.Tan(psiRad) * math.Sin(pautil.DegreesToRadians(lamdaDeg2-ldDeg)) / (rAu2 * math.Sin(-leLdRad))))

@@ -47,10 +47,11 @@ func BoolToInt(value bool) int {
 	return 0
 }
 
-func TernaryAssignFloat64(isTrueState bool, trueStateValue float64, falseStateValue float64) float64 {
+/* Conditionally return value based on a true/false evaluation. Handles multiple types. */
+func TernaryAssign[T any](isTrueState bool, trueStateValue, falseStateValue T) T {
 	if isTrueState {
 		return trueStateValue
-	} else {
-		return falseStateValue
 	}
+
+	return falseStateValue
 }

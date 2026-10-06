@@ -81,42 +81,42 @@ func LunarEclipseCircumstances(
 	var lunarEclipseCertainDateMonth int = localCivilDateMonth
 	var lunarEclipseCertainDateYear int = localCivilDateYear
 
-	var utStartPenPhaseHour float64 = pautil.TernaryAssignFloat64(
+	var utStartPenPhaseHour float64 = pautil.TernaryAssign(
 		utFirstContact == -99.0, -99, float64(pamacro.DecimalHoursHour(utFirstContact+0.008333)))
-	var utStartPenPhaseMinutes float64 = pautil.TernaryAssignFloat64(
+	var utStartPenPhaseMinutes float64 = pautil.TernaryAssign(
 		utFirstContact == -99.0, -99.0, float64(pamacro.DecimalHoursMinute(utFirstContact+0.008333)))
 
-	var utStartUmbralPhaseHour float64 = pautil.TernaryAssignFloat64(
+	var utStartUmbralPhaseHour float64 = pautil.TernaryAssign(
 		utStartUmbralPhase == -99.0, -99.0, float64(pamacro.DecimalHoursHour(utStartUmbralPhase+0.008333)))
-	var utStartUmbralPhaseMinutes float64 = pautil.TernaryAssignFloat64(
+	var utStartUmbralPhaseMinutes float64 = pautil.TernaryAssign(
 		utStartUmbralPhase == -99.0, -99.0, float64(pamacro.DecimalHoursMinute(utStartUmbralPhase+0.008333)))
 
-	var utStartTotalPhaseHour float64 = pautil.TernaryAssignFloat64(
+	var utStartTotalPhaseHour float64 = pautil.TernaryAssign(
 		utStartTotalPhase == -99.0, -99.0, float64(pamacro.DecimalHoursHour(utStartTotalPhase+0.008333)))
-	var utStartTotalPhaseMinutes float64 = pautil.TernaryAssignFloat64(
+	var utStartTotalPhaseMinutes float64 = pautil.TernaryAssign(
 		utStartTotalPhase == -99.0, -99.0, float64(pamacro.DecimalHoursMinute(utStartTotalPhase+0.008333)))
 
-	var utMidEclipseHour float64 = pautil.TernaryAssignFloat64(
+	var utMidEclipseHour float64 = pautil.TernaryAssign(
 		utMaxEclipse == -99.0, -99.0, float64(pamacro.DecimalHoursHour(utMaxEclipse+0.008333)))
-	var utMidEclipseMinutes float64 = pautil.TernaryAssignFloat64(
+	var utMidEclipseMinutes float64 = pautil.TernaryAssign(
 		utMaxEclipse == -99.0, -99.0, float64(pamacro.DecimalHoursMinute(utMaxEclipse+0.008333)))
 
-	var utEndTotalPhaseHour float64 = pautil.TernaryAssignFloat64(
+	var utEndTotalPhaseHour float64 = pautil.TernaryAssign(
 		utEndTotalPhase == -99.0, -99.0, float64(pamacro.DecimalHoursHour(utEndTotalPhase+0.008333)))
-	var utEndTotalPhaseMinutes float64 = pautil.TernaryAssignFloat64(
+	var utEndTotalPhaseMinutes float64 = pautil.TernaryAssign(
 		utEndTotalPhase == -99.0, -99.0, float64(pamacro.DecimalHoursMinute(utEndTotalPhase+0.008333)))
 
-	var utEndUmbralPhaseHour float64 = pautil.TernaryAssignFloat64(
+	var utEndUmbralPhaseHour float64 = pautil.TernaryAssign(
 		utEndUmbralPhase == -99.0, -99.0, float64(pamacro.DecimalHoursHour(utEndUmbralPhase+0.008333)))
-	var utEndUmbralPhaseMinutes float64 = pautil.TernaryAssignFloat64(
+	var utEndUmbralPhaseMinutes float64 = pautil.TernaryAssign(
 		utEndUmbralPhase == -99.0, -99.0, float64(pamacro.DecimalHoursMinute(utEndUmbralPhase+0.008333)))
 
-	var utEndPenPhaseHour float64 = pautil.TernaryAssignFloat64(
+	var utEndPenPhaseHour float64 = pautil.TernaryAssign(
 		utLastContact == -99.0, -99.0, float64(pamacro.DecimalHoursHour(utLastContact+0.008333)))
-	var utEndPenPhaseMinutes float64 = pautil.TernaryAssignFloat64(
+	var utEndPenPhaseMinutes float64 = pautil.TernaryAssign(
 		utLastContact == -99.0, -99.0, float64(pamacro.DecimalHoursMinute(utLastContact+0.008333)))
 
-	var eclipseMagnitude float64 = pautil.TernaryAssignFloat64(eclipseMagnitude1 == -99.0, -99.0, pautil.RoundTo(eclipseMagnitude1, 2))
+	var eclipseMagnitude float64 = pautil.TernaryAssign(eclipseMagnitude1 == -99.0, -99.0, pautil.RoundTo(eclipseMagnitude1, 2))
 
 	return patype.LunarEclipseCircumstances{
 		CertainDateDay:      lunarEclipseCertainDateDay,
@@ -198,22 +198,22 @@ func SolarEclipseCircumstances(
 	var certainDateMonth int = localCivilDateMonth
 	var certainDateYear int = localCivilDateYear
 
-	var utFirstContactHour float64 = pautil.TernaryAssignFloat64(
+	var utFirstContactHour float64 = pautil.TernaryAssign(
 		utFirstContact == -99.0, -99.0, float64(pamacro.DecimalHoursHour(utFirstContact+0.008333)))
-	var utFirstContactMinutes float64 = pautil.TernaryAssignFloat64(
+	var utFirstContactMinutes float64 = pautil.TernaryAssign(
 		utFirstContact == -99.0, -99.0, float64(pamacro.DecimalHoursMinute(utFirstContact+0.008333)))
 
-	var utMidEclipseHour float64 = pautil.TernaryAssignFloat64(
+	var utMidEclipseHour float64 = pautil.TernaryAssign(
 		utMaxEclipse == -99.0, -99.0, float64(pamacro.DecimalHoursHour(utMaxEclipse+0.008333)))
-	var utMidEclipseMinutes float64 = pautil.TernaryAssignFloat64(
+	var utMidEclipseMinutes float64 = pautil.TernaryAssign(
 		utMaxEclipse == -99.0, -99.0, float64(pamacro.DecimalHoursMinute(utMaxEclipse+0.008333)))
 
-	var utLastContactHour float64 = pautil.TernaryAssignFloat64(
+	var utLastContactHour float64 = pautil.TernaryAssign(
 		utLastContact == -99.0, -99.0, float64(pamacro.DecimalHoursHour(utLastContact+0.008333)))
-	var utLastContactMinutes float64 = pautil.TernaryAssignFloat64(
+	var utLastContactMinutes float64 = pautil.TernaryAssign(
 		utLastContact == -99.0, -99.0, float64(pamacro.DecimalHoursMinute(utLastContact+0.008333)))
 
-	var eclipseMagnitude float64 = pautil.TernaryAssignFloat64(magnitude == -99.0, -99.0, pautil.RoundTo(magnitude, 3))
+	var eclipseMagnitude float64 = pautil.TernaryAssign(magnitude == -99.0, -99.0, pautil.RoundTo(magnitude, 3))
 
 	return patype.SolarEclipseCircumstances{
 		CertainDateDay: certainDateDay, CertainDateMonth: certainDateMonth, CertainDateYear: certainDateYear,

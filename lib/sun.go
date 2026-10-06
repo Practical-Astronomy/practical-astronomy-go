@@ -122,46 +122,39 @@ func SunriseAndSunset(
 	var azimuthOfSunriseDeg1 float64 = pamacro.SunriseAz(localDay, localMonth, localYear, daylightSaving, zoneCorrection, geographicalLongDeg, geographicalLatDeg)
 	var azimuthOfSunsetDeg1 float64 = pamacro.SunsetAz(localDay, localMonth, localYear, daylightSaving, zoneCorrection, geographicalLongDeg, geographicalLatDeg)
 
-	var localSunriseHour int
-	if sunRiseSetStatus == patype.RiseSetStatus_OK {
-		localSunriseHour = pamacro.DecimalHoursHour(adjustedSunriseHours)
-	} else {
-		localSunriseHour = 0
-	}
-	var localSunriseMinute int
-	if sunRiseSetStatus == patype.RiseSetStatus_OK {
-		localSunriseMinute = pamacro.DecimalHoursMinute(adjustedSunriseHours)
-	} else {
-		localSunriseMinute = 0
-	}
+	var localSunriseHour int = pautil.TernaryAssign(
+		sunRiseSetStatus == patype.RiseSetStatus_OK,
+		pamacro.DecimalHoursHour(adjustedSunriseHours),
+		0,
+	)
+	var localSunriseMinute int = pautil.TernaryAssign(
+		sunRiseSetStatus == patype.RiseSetStatus_OK,
+		pamacro.DecimalHoursMinute(adjustedSunriseHours),
+		0,
+	)
 
-	var localSunsetHour int
-	if sunRiseSetStatus == patype.RiseSetStatus_OK {
-		localSunsetHour = pamacro.DecimalHoursHour(adjustedSunsetHours)
-	} else {
-		localSunsetHour = 0
-	}
+	var localSunsetHour int = pautil.TernaryAssign(
+		sunRiseSetStatus == patype.RiseSetStatus_OK,
+		pamacro.DecimalHoursHour(adjustedSunsetHours),
+		0,
+	)
+	var localSunsetMinute int = pautil.TernaryAssign(
+		sunRiseSetStatus == patype.RiseSetStatus_OK,
+		pamacro.DecimalHoursMinute(adjustedSunsetHours),
+		0,
+	)
 
-	var localSunsetMinute int
-	if sunRiseSetStatus == patype.RiseSetStatus_OK {
-		localSunsetMinute = pamacro.DecimalHoursMinute(adjustedSunsetHours)
-	} else {
-		localSunsetMinute = 0
-	}
+	var azimuthOfSunriseDeg float64 = pautil.TernaryAssign(
+		sunRiseSetStatus == patype.RiseSetStatus_OK,
+		pautil.RoundTo(azimuthOfSunriseDeg1, 2),
+		0,
+	)
 
-	var azimuthOfSunriseDeg float64
-	if sunRiseSetStatus == patype.RiseSetStatus_OK {
-		azimuthOfSunriseDeg = pautil.RoundTo(azimuthOfSunriseDeg1, 2)
-	} else {
-		azimuthOfSunriseDeg = 0
-	}
-
-	var azimuthOfSunsetDeg float64
-	if sunRiseSetStatus == patype.RiseSetStatus_OK {
-		azimuthOfSunsetDeg = pautil.RoundTo(azimuthOfSunsetDeg1, 2)
-	} else {
-		azimuthOfSunsetDeg = 0
-	}
+	var azimuthOfSunsetDeg float64 = pautil.TernaryAssign(
+		sunRiseSetStatus == patype.RiseSetStatus_OK,
+		pautil.RoundTo(azimuthOfSunsetDeg1, 2),
+		0,
+	)
 
 	var status patype.RiseSetStatus = sunRiseSetStatus
 
@@ -191,33 +184,27 @@ func MorningAndEveningTwilight(
 	var adjustedAmStartTime float64 = startOfAmTwilightHours + 0.008333
 	var adjustedPmStartTime float64 = endOfPmTwilightHours + 0.008333
 
-	var amTwilightBeginsHour float64
-	if twilightStatus == patype.TwilightStatus_OK {
-		amTwilightBeginsHour = float64(pamacro.DecimalHoursHour(adjustedAmStartTime))
-	} else {
-		amTwilightBeginsHour = -99
-	}
+	var amTwilightBeginsHour float64 = pautil.TernaryAssign(
+		twilightStatus == patype.TwilightStatus_OK,
+		float64(pamacro.DecimalHoursHour(adjustedAmStartTime)),
+		-99,
+	)
+	var amTwilightBeginsMin float64 = pautil.TernaryAssign(
+		twilightStatus == patype.TwilightStatus_OK,
+		float64(pamacro.DecimalHoursMinute(adjustedAmStartTime)),
+		-99,
+	)
 
-	var amTwilightBeginsMin float64
-	if twilightStatus == patype.TwilightStatus_OK {
-		amTwilightBeginsMin = float64(pamacro.DecimalHoursMinute(adjustedAmStartTime))
-	} else {
-		amTwilightBeginsMin = -99
-	}
-
-	var pmTwilightEndsHour float64
-	if twilightStatus == patype.TwilightStatus_OK {
-		pmTwilightEndsHour = float64(pamacro.DecimalHoursHour(adjustedPmStartTime))
-	} else {
-		pmTwilightEndsHour = -99
-	}
-
-	var pmTwilightEndsMin float64
-	if twilightStatus == patype.TwilightStatus_OK {
-		pmTwilightEndsMin = float64(pamacro.DecimalHoursMinute(adjustedPmStartTime))
-	} else {
-		pmTwilightEndsMin = -99
-	}
+	var pmTwilightEndsHour float64 = pautil.TernaryAssign(
+		twilightStatus == patype.TwilightStatus_OK,
+		float64(pamacro.DecimalHoursHour(adjustedPmStartTime)),
+		-99,
+	)
+	var pmTwilightEndsMin float64 = pautil.TernaryAssign(
+		twilightStatus == patype.TwilightStatus_OK,
+		float64(pamacro.DecimalHoursMinute(adjustedPmStartTime)),
+		-99,
+	)
 
 	var status patype.TwilightStatus = twilightStatus
 

@@ -5,6 +5,7 @@ import (
 	padata "practicalastro/lib/data"
 	pamacro "practicalastro/lib/macros"
 	patype "practicalastro/lib/types"
+	"practicalastro/lib/util"
 	pautil "practicalastro/lib/util"
 )
 
@@ -50,19 +51,17 @@ func PositionOfEllipticalComet(
 
 	var leLdRad float64 = pautil.DegreesToRadians(earthLongitudeLeDeg - ldDeg)
 
-	var aRad float64
-	if rdAu < earthRadiusVectorAu {
-		aRad = math.Atan2((rdAu * math.Sin(leLdRad)), (earthRadiusVectorAu - rdAu*math.Cos(leLdRad)))
-	} else {
-		aRad = math.Atan2((earthRadiusVectorAu * math.Sin(-leLdRad)), (rdAu - earthRadiusVectorAu*math.Cos(leLdRad)))
-	}
+	var aRad float64 = util.TernaryAssign(
+		rdAu < earthRadiusVectorAu,
+		math.Atan2((rdAu*math.Sin(leLdRad)), (earthRadiusVectorAu-rdAu*math.Cos(leLdRad))),
+		math.Atan2((earthRadiusVectorAu*math.Sin(-leLdRad)), (rdAu-earthRadiusVectorAu*math.Cos(leLdRad))),
+	)
 
-	var cometLongDeg1 float64
-	if rdAu < earthRadiusVectorAu {
-		cometLongDeg1 = 180.0 + earthLongitudeLeDeg + pamacro.Degrees(aRad)
-	} else {
-		cometLongDeg1 = pamacro.Degrees(aRad) + ldDeg
-	}
+	var cometLongDeg1 float64 = pautil.TernaryAssign(
+		rdAu < earthRadiusVectorAu,
+		180.0+earthLongitudeLeDeg+pamacro.Degrees(aRad),
+		pamacro.Degrees(aRad)+ldDeg,
+	)
 
 	var cometLongDeg float64 = cometLongDeg1 - 360*math.Floor(cometLongDeg1/360)
 	var cometLatDeg float64 = pamacro.Degrees(

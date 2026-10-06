@@ -4,6 +4,7 @@ import (
 	"math"
 	pamacro "practicalastro/lib/macros"
 	patype "practicalastro/lib/types"
+	"practicalastro/lib/util"
 	pautil "practicalastro/lib/util"
 )
 
@@ -38,19 +39,11 @@ func GetDateOfEaster(inputYear int) patype.FullDate {
 func CivilDateToDayNumber(month int, day int, year int) int {
 	if month <= 2 {
 		month = month - 1
-		if pautil.IsLeapYear(year) {
-			month = month * 62
-		} else {
-			month = month * 63
-		}
+		month = util.TernaryAssign(pautil.IsLeapYear(year), month*62, month*63)
 		month = int(math.Floor(float64(month) / 2))
 	} else {
 		month = int(math.Floor((float64(month) + 1) * 30.6))
-		if pautil.IsLeapYear(year) {
-			month = month - 62
-		} else {
-			month = month - 63
-		}
+		month = util.TernaryAssign(pautil.IsLeapYear(year), month-62, month-63)
 	}
 
 	return month + day
@@ -167,11 +160,7 @@ func GreenwichSiderealTimeToUniversalTime(
 	var utSeconds float64 = pamacro.DecimalHoursSecond(ut)
 
 	var warningFlag patype.WarningFlags
-	if ut < 0.065574 {
-		warningFlag = patype.WarningFlag_Warning
-	} else {
-		warningFlag = patype.WarningFlag_OK
-	}
+	warningFlag = util.TernaryAssign(ut < 0.065574, patype.WarningFlag_Warning, patype.WarningFlag_OK)
 
 	return patype.FullTimeWithWarning{Hours: utHours, Minutes: utMinutes, Seconds: utSeconds, WarningFlag: warningFlag}
 }

@@ -631,11 +631,7 @@ func MoonRiseLct(dy float64, mn int, yr int, ds int, zc int, gLong float64, gLat
 		x = LocalSiderealTimeToGreenwichSiderealTime(la, 0.0, 0.0, gLong)
 		ut = GreenwichSiderealTimeToUniversalTime(x, 0.0, 0.0, gdy, gmn, gyr)
 
-		if k == 1 {
-			g1 = ut
-		} else {
-			g1 = gu
-		}
+		g1 = pautil.TernaryAssign(k == 1, ut, gu)
 
 		gu = ut
 		ut = gu
@@ -747,11 +743,7 @@ func MoonRiseLcDmy(dy float64, mn int, yr int, ds int, zc int, gLong float64, gL
 		x = LocalSiderealTimeToGreenwichSiderealTime(la, 0.0, 0.0, gLong)
 		ut = GreenwichSiderealTimeToUniversalTime(x, 0.0, 0.0, gdy, gmn, gyr)
 
-		if k == 1 {
-			g1 = ut
-		} else {
-			g1 = gu
-		}
+		g1 = pautil.TernaryAssign(k == 1, ut, gu)
 
 		gu = ut
 		ut = gu
@@ -866,11 +858,7 @@ func MoonRiseAz(dy float64, mn int, yr int, ds int, zc int, gLong float64, gLat 
 		x = LocalSiderealTimeToGreenwichSiderealTime(la, 0.0, 0.0, gLong)
 		ut = GreenwichSiderealTimeToUniversalTime(x, 0.0, 0.0, gdy, gmn, gyr)
 
-		if k == 1 {
-			g1 = ut
-		} else {
-			g1 = gu
-		}
+		g1 = pautil.TernaryAssign(k == 1, ut, gu)
 
 		gu = ut
 		ut = gu
@@ -971,11 +959,7 @@ func MoonSetLct(dy float64, mn int, yr int, ds int, zc int, gLong float64, gLat 
 		x = LocalSiderealTimeToGreenwichSiderealTime(la, 0.0, 0.0, gLong)
 		ut = GreenwichSiderealTimeToUniversalTime(x, 0.0, 0.0, gdy, gmn, gyr)
 
-		if k == 1 {
-			g1 = ut
-		} else {
-			g1 = gu
-		}
+		g1 = pautil.TernaryAssign(k == 1, ut, gu)
 
 		gu = ut
 		ut = gu
@@ -1087,11 +1071,7 @@ func MoonSetLcDmy(dy float64, mn int, yr int, ds int, zc int, gLong float64, gLa
 		x = LocalSiderealTimeToGreenwichSiderealTime(la, 0.0, 0.0, gLong)
 		ut = GreenwichSiderealTimeToUniversalTime(x, 0.0, 0.0, gdy, gmn, gyr)
 
-		if k == 1 {
-			g1 = ut
-		} else {
-			g1 = gu
-		}
+		g1 = pautil.TernaryAssign(k == 1, ut, gu)
 
 		gu = ut
 		ut = gu
@@ -1204,11 +1184,7 @@ func MoonSetAz(dy float64, mn int, yr int, ds int, zc int, gLong float64, gLat f
 		x = LocalSiderealTimeToGreenwichSiderealTime(la, 0.0, 0.0, gLong)
 		ut = GreenwichSiderealTimeToUniversalTime(x, 0.0, 0.0, gdy, gmn, gyr)
 
-		if k == 1 {
-			g1 = ut
-		} else {
-			g1 = gu
-		}
+		g1 = pautil.TernaryAssign(k == 1, ut, gu)
 
 		gu = ut
 		ut = gu

@@ -13,12 +13,7 @@ func AngleToDecimalDegrees(degrees float64, minutes float64, seconds float64) fl
 	var b float64 = (math.Abs(minutes) + a) / 60
 	var c float64 = math.Abs(degrees) + b
 
-	var d float64
-	if degrees < 0 || minutes < 0 || seconds < 0 {
-		d = -c
-	} else {
-		d = c
-	}
+	var d float64 = pautil.TernaryAssign(degrees < 0 || minutes < 0 || seconds < 0, -c, c)
 
 	return d
 }
@@ -29,29 +24,13 @@ func DecimalDegreesToAngle(decimalDegrees float64) patype.Angle {
 	var totalSeconds float64 = unsignedDecimal * 3600
 	var seconds2DP float64 = pautil.RoundTo(math.Mod(totalSeconds, 60), 2)
 
-	var correctedSeconds float64
-	if seconds2DP == 60 {
-		correctedSeconds = 0
-	} else {
-		correctedSeconds = seconds2DP
-	}
-
-	var correctedRemainder float64
-	if seconds2DP == 60 {
-		correctedRemainder = totalSeconds + 60
-	} else {
-		correctedRemainder = totalSeconds
-	}
+	var correctedSeconds float64 = pautil.TernaryAssign(seconds2DP == 60, 0, seconds2DP)
+	var correctedRemainder float64 = pautil.TernaryAssign(seconds2DP == 60, totalSeconds+60, totalSeconds)
 
 	var minutes float64 = math.Mod(math.Floor(correctedRemainder/60), 60)
 	var unsignedDegrees float64 = math.Floor(correctedRemainder / 3600)
 
-	var signedDegrees float64
-	if decimalDegrees < 0 {
-		signedDegrees = -1 * unsignedDegrees
-	} else {
-		signedDegrees = unsignedDegrees
-	}
+	var signedDegrees float64 = pautil.TernaryAssign(decimalDegrees < 0, -1*unsignedDegrees, unsignedDegrees)
 
 	return patype.Angle{Degrees: signedDegrees, Minutes: minutes, Seconds: math.Floor(correctedSeconds)}
 }
@@ -288,35 +267,31 @@ func AngleBetweenTwoObjects(
 	raLong2HourDeg float64, raLong2Min float64, raLong2Sec float64, decLat2Deg float64, decLat2Min float64, decLat2Sec float64,
 	hourOrDegree patype.AngleMeasurementTypes,
 ) patype.Angle {
-	var raLong1Decimal float64
-	if hourOrDegree == patype.AngleMeasurementType_Hours {
-		raLong1Decimal = pamacro.HmsDh(raLong1HourDeg, raLong1Min, raLong1Sec)
-	} else {
-		raLong1Decimal = pamacro.DegreesMinutesSecondsToDecimalDegrees(raLong1HourDeg, raLong1Min, raLong1Sec)
-	}
-	var raLong1Deg float64
-	if hourOrDegree == patype.AngleMeasurementType_Hours {
-		raLong1Deg = pamacro.DegreeHoursToDecimalDegrees(raLong1Decimal)
-	} else {
-		raLong1Deg = raLong1Decimal
-	}
+	var raLong1Decimal float64 = pautil.TernaryAssign(
+		hourOrDegree == patype.AngleMeasurementType_Hours,
+		pamacro.HmsDh(raLong1HourDeg, raLong1Min, raLong1Sec),
+		pamacro.DegreesMinutesSecondsToDecimalDegrees(raLong1HourDeg, raLong1Min, raLong1Sec),
+	)
+	var raLong1Deg float64 = pautil.TernaryAssign(
+		hourOrDegree == patype.AngleMeasurementType_Hours,
+		pamacro.DegreeHoursToDecimalDegrees(raLong1Decimal),
+		raLong1Decimal,
+	)
 
 	var raLong1Rad float64 = pautil.DegreesToRadians(raLong1Deg)
 	var decLat1Deg1 float64 = pamacro.DegreesMinutesSecondsToDecimalDegrees(decLat1Deg, decLat1Min, decLat1Sec)
 	var decLat1Rad float64 = pautil.DegreesToRadians(decLat1Deg1)
 
-	var raLong2Decimal float64
-	if hourOrDegree == patype.AngleMeasurementType_Hours {
-		raLong2Decimal = pamacro.HmsDh(raLong2HourDeg, raLong2Min, raLong2Sec)
-	} else {
-		raLong2Decimal = pamacro.DegreesMinutesSecondsToDecimalDegrees(raLong2HourDeg, raLong2Min, raLong2Sec)
-	}
-	var raLong2Deg float64
-	if hourOrDegree == patype.AngleMeasurementType_Hours {
-		raLong2Deg = pamacro.DegreeHoursToDecimalDegrees(raLong2Decimal)
-	} else {
-		raLong2Deg = raLong2Decimal
-	}
+	var raLong2Decimal float64 = pautil.TernaryAssign(
+		hourOrDegree == patype.AngleMeasurementType_Hours,
+		pamacro.HmsDh(raLong2HourDeg, raLong2Min, raLong2Sec),
+		pamacro.DegreesMinutesSecondsToDecimalDegrees(raLong2HourDeg, raLong2Min, raLong2Sec),
+	)
+	var raLong2Deg float64 = pautil.TernaryAssign(
+		hourOrDegree == patype.AngleMeasurementType_Hours,
+		pamacro.DegreeHoursToDecimalDegrees(raLong2Decimal),
+		raLong2Decimal,
+	)
 	var raLong2Rad float64 = pautil.DegreesToRadians(raLong2Deg)
 	var decLat2Deg1 float64 = pamacro.DegreesMinutesSecondsToDecimalDegrees(decLat2Deg, decLat2Min, decLat2Sec)
 	var decLat2Rad float64 = pautil.DegreesToRadians(decLat2Deg1)
@@ -365,47 +340,38 @@ func RisingAndSetting(
 		rsStatus = patype.RiseSetStatus_Circumpolar
 	}
 
-	var utRiseHour int
-	if rsStatus == patype.RiseSetStatus_OK {
-		utRiseHour = pamacro.DecimalHoursHour(utRiseAdjustedHours)
-	} else {
-		utRiseHour = 0
-	}
+	var utRiseHour int = pautil.TernaryAssign(
+		rsStatus == patype.RiseSetStatus_OK,
+		pamacro.DecimalHoursHour(utRiseAdjustedHours),
+		0,
+	)
+	var utRiseMin int = pautil.TernaryAssign(
+		rsStatus == patype.RiseSetStatus_OK,
+		pamacro.DecimalHoursMinute(utRiseAdjustedHours),
+		0,
+	)
 
-	var utRiseMin int
-	if rsStatus == patype.RiseSetStatus_OK {
-		utRiseMin = pamacro.DecimalHoursMinute(utRiseAdjustedHours)
-	} else {
-		utRiseMin = 0
-	}
+	var utSetHour int = pautil.TernaryAssign(
+		rsStatus == patype.RiseSetStatus_OK,
+		pamacro.DecimalHoursHour(utSetAdjustedHours),
+		0,
+	)
+	var utSetMin int = pautil.TernaryAssign(
+		rsStatus == patype.RiseSetStatus_OK,
+		pamacro.DecimalHoursMinute(utSetAdjustedHours),
+		0,
+	)
 
-	var utSetHour int
-	if rsStatus == patype.RiseSetStatus_OK {
-		utSetHour = pamacro.DecimalHoursHour(utSetAdjustedHours)
-	} else {
-		utSetHour = 0
-	}
-
-	var utSetMin int
-	if rsStatus == patype.RiseSetStatus_OK {
-		utSetMin = pamacro.DecimalHoursMinute(utSetAdjustedHours)
-	} else {
-		utSetMin = 0
-	}
-
-	var azRise float64
-	if rsStatus == patype.RiseSetStatus_OK {
-		azRise = pautil.RoundTo(azRiseDeg, 2)
-	} else {
-		azRise = 0
-	}
-
-	var azSet float64
-	if rsStatus == patype.RiseSetStatus_OK {
-		azSet = pautil.RoundTo(azSetDeg, 2)
-	} else {
-		azSet = 0
-	}
+	var azRise float64 = pautil.TernaryAssign(
+		rsStatus == patype.RiseSetStatus_OK,
+		pautil.RoundTo(azRiseDeg, 2),
+		0,
+	)
+	var azSet float64 = pautil.TernaryAssign(
+		rsStatus == patype.RiseSetStatus_OK,
+		pautil.RoundTo(azSetDeg, 2),
+		0,
+	)
 
 	return patype.RiseSet{
 		RiseSetStatusCurrent: rsStatus,
@@ -627,12 +593,11 @@ func SelenographicCoordinates1(gwdateDay float64, gwdateMonth int, gwdateYear in
 	var aDeg float64 = pamacro.Degrees(aRad)
 	var subEarthLongDeg1 float64 = aDeg - f2
 	var subEarthLongDeg2 float64 = subEarthLongDeg1 - 360*math.Floor(subEarthLongDeg1/360)
-	var subEarthLongDeg3 float64
-	if subEarthLongDeg2 > 180 {
-		subEarthLongDeg3 = (subEarthLongDeg2 - 360)
-	} else {
-		subEarthLongDeg3 = subEarthLongDeg2
-	}
+	var subEarthLongDeg3 float64 = pautil.TernaryAssign(
+		subEarthLongDeg2 > 180,
+		(subEarthLongDeg2 - 360),
+		subEarthLongDeg2,
+	)
 	var c1Rad float64 = math.Atan(math.Cos(nodeLongRad) * math.Sin(inclinationRad) / (math.Cos(geocentricMoonLatRad)*math.Cos(inclinationRad) +
 		math.Sin(geocentricMoonLatRad)*math.Sin(inclinationRad)*math.Sin(nodeLongRad)))
 	var obliquityRad float64 = pautil.DegreesToRadians(pamacro.Obliq(gwdateDay, gwdateMonth, gwdateYear))
@@ -672,12 +637,11 @@ func SelenographicCoordinates2(gwdateDay float64, gwdateMonth int, gwdateYear in
 	var aDeg float64 = pamacro.Degrees(aRad)
 	var subSolarLongDeg1 float64 = aDeg - f2
 	var subSolarLongDeg2 float64 = subSolarLongDeg1 - 360*math.Floor(subSolarLongDeg1/360)
-	var subSolarLongDeg3 float64
-	if subSolarLongDeg2 > 180 {
-		subSolarLongDeg3 = subSolarLongDeg2 - 360
-	} else {
-		subSolarLongDeg3 = subSolarLongDeg2
-	}
+	var subSolarLongDeg3 float64 = pautil.TernaryAssign(
+		subSolarLongDeg2 > 180,
+		subSolarLongDeg2-360,
+		subSolarLongDeg2,
+	)
 	var subSolarColongDeg float64 = 90 - subSolarLongDeg3
 
 	var subSolarLongitude float64 = pautil.RoundTo(subSolarLongDeg3, 2)

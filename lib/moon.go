@@ -127,12 +127,11 @@ func MoonPhase(
 		lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear)
 	var dRad float64 = pautil.DegreesToRadians(moonResult.LongDeg - sunLongDeg)
 
-	var moonPhase1 float64
-	if accuracyLevel == patype.AccuracyLevel_Precise {
-		moonPhase1 = pamacro.MoonPhase(lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear)
-	} else {
-		moonPhase1 = (1.0 - math.Cos(dRad)) / 2.0
-	}
+	var moonPhase1 float64 = pautil.TernaryAssign(
+		accuracyLevel == patype.AccuracyLevel_Precise,
+		pamacro.MoonPhase(lctHour, lctMin, lctSec, daylightSaving, zoneCorrectionHours, localDateDay, localDateMonth, localDateYear),
+		(1.0-math.Cos(dRad))/2.0,
+	)
 
 	var sunRaRad float64 = pautil.DegreesToRadians(pamacro.EclipticRightAscension(sunLongDeg, 0, 0, 0, 0, 0, gdateDay, gdateMonth, gdateYear))
 	var moonRaRad float64 = pautil.DegreesToRadians(pamacro.EclipticRightAscension(
